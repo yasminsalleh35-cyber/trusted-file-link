@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { LandingPage } from '@/components/landing/LandingPage';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { ClientDashboard } from '@/components/client/ClientDashboard';
 import { UserDashboard } from '@/components/user/UserDashboard';
@@ -37,6 +38,7 @@ const Index = () => {
   const { user, isLoading, isAuthenticated, login, logout } = useAuth();
   const [currentRoute, setCurrentRoute] = useState('/dashboard');
   const [loginRole, setLoginRole] = useState<'admin' | 'client' | 'user'>('admin');
+  const [showLanding, setShowLanding] = useState(true);
 
   // Handle user login
   const handleLogin = async (userData: { email: string; role: string; clientId?: string }) => {
@@ -44,6 +46,15 @@ const Index = () => {
       email: userData.email,
       role: userData.role as 'admin' | 'client' | 'user',
       clientId: userData.clientId
+    });
+  };
+
+  // Handle role switching for demo
+  const handleRoleSwitch = async (role: 'admin' | 'client' | 'user') => {
+    await login({
+      email: `demo-${role}@financehub.com`,
+      role: role,
+      clientId: role === 'client' ? 'demo-client-1' : undefined
     });
   };
 
@@ -87,7 +98,7 @@ const Index = () => {
 
     switch (user.role) {
       case 'admin':
-        return <AdminDashboard onNavigate={handleNavigate} />;
+        return <AdminDashboard onNavigate={handleNavigate} onRoleSwitch={handleRoleSwitch} />;
       case 'client':
         return (
           <ClientDashboard 
@@ -128,6 +139,11 @@ const Index = () => {
         </div>
       </div>
     );
+  }
+
+  // Show landing page first
+  if (showLanding && !isAuthenticated) {
+    return <LandingPage onEnterPortal={() => setShowLanding(false)} />;
   }
 
   // Show login form if not authenticated
