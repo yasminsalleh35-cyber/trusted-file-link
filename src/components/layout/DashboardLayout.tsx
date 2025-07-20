@@ -17,6 +17,7 @@ import {
   Bell,
   ChevronDown
 } from 'lucide-react';
+import { AnimatedBackground } from './AnimatedBackground';
 
 /**
  * DashboardLayout Component
@@ -89,7 +90,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 relative">
+      {/* Animated background */}
+      <AnimatedBackground />
+      
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -153,7 +157,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top header */}
-        <header className="bg-card shadow-sm border-b">
+        <header className="bg-card/80 backdrop-blur-sm shadow-sm border-b relative z-10">
           <div className="flex items-center justify-between px-6 py-4">
             {/* Mobile menu button */}
             <Button
@@ -218,7 +222,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </header>
 
         {/* Main content area */}
-        <main className="p-6">
+        <main className="p-6 relative z-10">
           {children}
         </main>
       </div>

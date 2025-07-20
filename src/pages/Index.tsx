@@ -148,50 +148,7 @@ const Index = () => {
 
   // Show login form if not authenticated
   if (!isAuthenticated || !user) {
-    return (
-      <div>
-        {/* Role selector for demo purposes */}
-        <div className="fixed top-4 right-4 z-50">
-          <div className="bg-card rounded-lg shadow-lg border p-4">
-            <p className="text-sm font-medium mb-2">Demo Login As:</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setLoginRole('admin')}
-                className={`px-3 py-1 text-xs rounded ${
-                  loginRole === 'admin' 
-                    ? 'bg-admin text-white' 
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Admin
-              </button>
-              <button
-                onClick={() => setLoginRole('client')}
-                className={`px-3 py-1 text-xs rounded ${
-                  loginRole === 'client' 
-                    ? 'bg-client text-white' 
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Client
-              </button>
-              <button
-                onClick={() => setLoginRole('user')}
-                className={`px-3 py-1 text-xs rounded ${
-                  loginRole === 'user' 
-                    ? 'bg-user text-white' 
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                User
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <LoginForm onLogin={handleLogin} userType={loginRole} />
-      </div>
-    );
+    return <LoginForm onLogin={handleLogin} />;
   }
 
   // Show main dashboard with layout

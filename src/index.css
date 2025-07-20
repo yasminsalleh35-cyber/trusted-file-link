@@ -176,6 +176,66 @@ All colors MUST be HSL for consistency and theming
     animation-delay: 0.5s;
   }
 
+  /* Floating animations for background elements */
+  .animate-float-slow {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-float-medium {
+    animation: float 4s ease-in-out infinite;
+  }
+  
+  .animate-float-fast {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-spin-slow {
+    animation: spin 20s linear infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-flow {
+    animation: flow 15s ease-in-out infinite;
+  }
+  
+  .animate-flow-reverse {
+    animation: flow-reverse 20s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+  
+  @keyframes flow {
+    0%, 100% {
+      stroke-dasharray: 0, 1000;
+      stroke-dashoffset: 0;
+    }
+    50% {
+      stroke-dasharray: 100, 1000;
+      stroke-dashoffset: -200;
+    }
+  }
+  
+  @keyframes flow-reverse {
+    0%, 100% {
+      stroke-dasharray: 0, 1000;
+      stroke-dashoffset: 0;
+    }
+    50% {
+      stroke-dasharray: 80, 1000;
+      stroke-dashoffset: 200;
+    }
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;

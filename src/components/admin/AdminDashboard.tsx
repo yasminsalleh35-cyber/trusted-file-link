@@ -80,42 +80,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
 
   return (
     <div className="space-y-6">
-      {/* Demo Role Switcher */}
-      {onRoleSwitch && (
-        <Card className="p-4 bg-gradient-to-r from-muted/50 to-muted/30 border-dashed">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">Demo Mode</h3>
-              <p className="text-sm text-muted-foreground">Switch between different user roles to test the portal</p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => onRoleSwitch('admin')}
-                className="bg-admin hover:bg-admin/90 text-white"
-              >
-                Admin View
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onRoleSwitch('client')}
-                className="border-client text-client hover:bg-client hover:text-white"
-              >
-                Client View
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onRoleSwitch('user')}
-                className="border-user text-user hover:bg-user hover:text-white"
-              >
-                User View
-              </Button>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* Header with quick actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

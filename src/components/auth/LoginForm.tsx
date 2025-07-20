@@ -4,7 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Lock, Building2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Mail, Lock, Building2, Shield, User, Users } from 'lucide-react';
 
 /**
  * LoginForm Component
@@ -24,13 +26,14 @@ import { Loader2, Mail, Lock, Building2 } from 'lucide-react';
 
 interface LoginFormProps {
   onLogin: (userData: { email: string; role: string; clientId?: string }) => void;
-  userType: 'admin' | 'client' | 'user';
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, userType }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   // Form state management
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState<'admin' | 'client' | 'user'>('admin');
+  const [isHuman, setIsHuman] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,7 +42,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, userType }) => {
     admin: {
       title: 'Admin Portal',
       description: 'Manage clients, users, and system settings',
-      icon: <Building2 className="h-6 w-6 text-admin" />,
+      icon: <Shield className="h-6 w-6 text-admin" />,
       buttonClass: 'bg-admin hover:bg-admin/90',
       accentColor: 'border-l-4 border-l-admin'
     },
@@ -53,7 +56,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, userType }) => {
     user: {
       title: 'User Portal',
       description: 'Access your assigned files and messages',
-      icon: <Building2 className="h-6 w-6 text-user" />,
+      icon: <User className="h-6 w-6 text-user" />,
       buttonClass: 'bg-user hover:bg-user/90',
       accentColor: 'border-l-4 border-l-user'
     }
@@ -77,6 +80,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, userType }) => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         throw new Error('Please enter a valid email address');
+      }
+
+      // Human verification check
+      if (!isHuman) {
+        throw new Error('Please verify that you are human');
       }
 
       // TODO: Integrate with Supabase authentication
@@ -112,6 +120,36 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, userType }) => {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Demo Login As Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Demo Login As</Label>
+              <Select value={userType} onValueChange={(value: 'admin' | 'client' | 'user') => setUserType(value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">
+                    <div className="flex items-center space-x-2">
+                      <Shield className="h-4 w-4 text-admin" />
+                      <span>Admin - Full System Access</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="client">
+                    <div className="flex items-center space-x-2">
+                      <Building2 className="h-4 w-4 text-client" />
+                      <span>Client - Team Management</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="user">
+                    <div className="flex items-center space-x-2">
+                      <User className="h-4 w-4 text-user" />
+                      <span>User - File Access</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Email Input */}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
@@ -149,6 +187,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, userType }) => {
                   disabled={isLoading}
                   required
                 />
+              </div>
+            </div>
+
+            {/* Human Verification */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Verify Human</Label>
+              <div className="flex items-center space-x-2 p-4 border rounded-lg bg-muted/20">
+                <Checkbox 
+                  id="human-verify"
+                  checked={isHuman}
+                  onCheckedChange={(checked) => setIsHuman(checked as boolean)}
+                />
+                <Label htmlFor="human-verify" className="text-sm cursor-pointer">
+                  I'm not a robot (Demo verification)
+                </Label>
               </div>
             </div>
 
