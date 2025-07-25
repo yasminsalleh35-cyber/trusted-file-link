@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 /**
  * useAuth Hook
  * 
- * Purpose: Manage authentication state across the application
+ * Purpose: Manage authentication state across the application using Supabase
  * Features:
- * - Track current user authentication status
- * - Store user role and permissions
- * - Handle login/logout operations
- * - Persist authentication state
- * 
- * This hook will be enhanced with Supabase authentication once connected
- * Currently uses localStorage for demo purposes
+ * - Track current user authentication status with Supabase Auth
+ * - Store user role and permissions from profiles table
+ * - Handle login/logout/signup operations with Supabase Auth
+ * - Persist authentication state with Supabase session management
  */
 
 export interface User {
@@ -20,11 +19,12 @@ export interface User {
   role: 'admin' | 'client' | 'user';
   clientId?: string;
   clientName?: string;
-  name?: string;
+  fullName?: string;
 }
 
 interface AuthState {
   user: User | null;
+  session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -32,76 +32,147 @@ interface AuthState {
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
+    session: null,
     isLoading: true,
     isAuthenticated: false
   });
 
-  // Initialize authentication state from localStorage
+  // Fetch user profile data from our profiles table
+  const fetchUserProfile = async (userId: string): Promise<User | null> => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          email,
+          full_name,
+          role,
+          client_id,
+          clients:client_id (
+            company_name
+          )
+        `)
+        .eq('id', userId)
+        .single();
+
+      if (error || !profile) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return {
+        id: profile.id,
+        email: profile.email,
+        role: profile.role,
+        clientId: profile.client_id || undefined,
+        clientName: profile.clients?.company_name || undefined,
+        fullName: profile.full_name || undefined
+      };
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+  };
+
+  // Initialize authentication state and set up listener
   useEffect(() => {
-    const storedUser = localStorage.getItem('client-portal-user');
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        setAuthState({
-          user,
-          isLoading: false,
-          isAuthenticated: true
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setAuthState(prev => ({ ...prev, session }));
+
+        if (session?.user) {
+          // Defer profile fetching to prevent deadlocks
+          setTimeout(async () => {
+            const userProfile = await fetchUserProfile(session.user.id);
+            setAuthState(prev => ({
+              ...prev,
+              user: userProfile,
+              isLoading: false,
+              isAuthenticated: !!userProfile
+            }));
+          }, 0);
+        } else {
+          setAuthState({
+            user: null,
+            session: null,
+            isLoading: false,
+            isAuthenticated: false
+          });
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setAuthState(prev => ({ ...prev, session }));
+        fetchUserProfile(session.user.id).then(userProfile => {
+          setAuthState(prev => ({
+            ...prev,
+            user: userProfile,
+            isLoading: false,
+            isAuthenticated: !!userProfile
+          }));
         });
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('client-portal-user');
+      } else {
         setAuthState({
           user: null,
+          session: null,
           isLoading: false,
           isAuthenticated: false
         });
       }
-    } else {
-      setAuthState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false
-      });
-    }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  // Clean up auth state
+  const cleanupAuthState = () => {
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-') || key === 'client-portal-user') {
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
   // Login function
-  const login = async (credentials: { 
-    email: string; 
-    role: 'admin' | 'client' | 'user';
-    clientId?: string;
-  }) => {
+  const login = async (credentials: { email: string; password: string }) => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
 
     try {
-      // TODO: Replace with actual Supabase authentication
-      // For now, create a mock user based on credentials
-      const mockUser: User = {
-        id: `mock-${Date.now()}`,
+      // Clean up any existing state
+      cleanupAuthState();
+      
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
-        role: credentials.role,
-        clientId: credentials.clientId,
-        // Mock data based on role
-        clientName: credentials.role !== 'admin' ? 'Sample Company Inc.' : undefined,
-        name: credentials.email.split('@')[0].replace(/[^a-zA-Z]/g, ' ').trim()
-      };
-
-      // Store in localStorage (will be replaced with Supabase session)
-      localStorage.setItem('client-portal-user', JSON.stringify(mockUser));
-
-      setAuthState({
-        user: mockUser,
-        isLoading: false,
-        isAuthenticated: true
+        password: credentials.password,
       });
 
-      return { success: true };
+      if (error) throw error;
+
+      if (data.user) {
+        // The onAuthStateChange will handle setting the user profile
+        return { success: true };
+      }
+
+      throw new Error('Login failed');
     } catch (error) {
-      setAuthState({
+      setAuthState(prev => ({
+        ...prev,
         user: null,
+        session: null,
         isLoading: false,
         isAuthenticated: false
-      });
+      }));
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Login failed' 
@@ -109,18 +180,61 @@ export const useAuth = () => {
     }
   };
 
+  // Signup function
+  const signup = async (credentials: { email: string; password: string; fullName?: string }) => {
+    setAuthState(prev => ({ ...prev, isLoading: true }));
+
+    try {
+      cleanupAuthState();
+
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: credentials.email,
+        password: credentials.password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: credentials.fullName || credentials.email.split('@')[0]
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error) {
+      setAuthState(prev => ({
+        ...prev,
+        user: null,
+        session: null,
+        isLoading: false,
+        isAuthenticated: false
+      }));
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Signup failed' 
+      };
+    }
+  };
+
   // Logout function
   const logout = async () => {
     try {
-      // TODO: Add Supabase logout logic
-      localStorage.removeItem('client-portal-user');
+      cleanupAuthState();
+      
+      await supabase.auth.signOut({ scope: 'global' });
       
       setAuthState({
         user: null,
+        session: null,
         isLoading: false,
         isAuthenticated: false
       });
 
+      // Force page refresh for clean state
+      window.location.href = '/';
+      
       return { success: true };
     } catch (error) {
       console.error('Logout error:', error);
@@ -132,14 +246,30 @@ export const useAuth = () => {
   };
 
   // Update user function (for profile updates)
-  const updateUser = (updatedUser: Partial<User>) => {
-    if (authState.user) {
-      const newUser = { ...authState.user, ...updatedUser };
-      localStorage.setItem('client-portal-user', JSON.stringify(newUser));
-      setAuthState(prev => ({
-        ...prev,
-        user: newUser
-      }));
+  const updateUser = async (updatedUser: Partial<User>) => {
+    if (!authState.user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: updatedUser.fullName,
+          // Add other updatable fields as needed
+        })
+        .eq('id', authState.user.id);
+
+      if (error) throw error;
+
+      // Refresh user profile
+      const updatedProfile = await fetchUserProfile(authState.user.id);
+      if (updatedProfile) {
+        setAuthState(prev => ({
+          ...prev,
+          user: updatedProfile
+        }));
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
     }
   };
 
@@ -175,6 +305,7 @@ export const useAuth = () => {
   return {
     ...authState,
     login,
+    signup,
     logout,
     updateUser,
     hasPermission

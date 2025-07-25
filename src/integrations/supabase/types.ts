@@ -127,13 +127,6 @@ export type Database = {
             foreignKeyName: "file_assignments_file_id_fkey"
             columns: ["file_id"]
             isOneToOne: false
-            referencedRelation: "file_assignments_detailed"
-            referencedColumns: ["file_id"]
-          },
-          {
-            foreignKeyName: "file_assignments_file_id_fkey"
-            columns: ["file_id"]
-            isOneToOne: false
             referencedRelation: "files"
             referencedColumns: ["id"]
           },
@@ -362,13 +355,6 @@ export type Database = {
             referencedRelation: "news"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "news_assignments_news_id_fkey"
-            columns: ["news_id"]
-            isOneToOne: false
-            referencedRelation: "news_assignments_detailed"
-            referencedColumns: ["news_id"]
-          },
         ]
       }
       profiles: {
@@ -450,6 +436,13 @@ export type Database = {
             referencedRelation: "user_profiles_with_clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "file_assignments_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
         ]
       }
       news_assignments_detailed: {
@@ -487,6 +480,13 @@ export type Database = {
             columns: ["assigned_to_user"]
             isOneToOne: false
             referencedRelation: "user_profiles_with_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_assignments_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
             referencedColumns: ["id"]
           },
         ]
