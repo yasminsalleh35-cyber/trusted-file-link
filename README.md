@@ -158,19 +158,25 @@ The application includes a demo mode with role switching:
 - Use any email format for login
 - Password can be anything for demo purposes
 
-## 🔗 **Backend Integration**
+## 🔗 **Backend Integration Plan**
 
-### **Supabase Setup Required**
+### **STEP 1: Supabase Connection (REQUIRED FIRST)**
 
-⚠️ **IMPORTANT**: To enable full functionality, connect your Supabase project:
+⚠️ **ACTION REQUIRED**: Click the green **Supabase** button in Lovable interface to connect your existing Supabase project:
+- **Project ID**: `hodpwoqadtbgerfdcizq`
+- **Project URL**: `https://hodpwoqadtbgerfdcizq.supabase.co`
+- **Status**: ⏳ Pending Connection
 
-1. Click the green **Supabase** button in Lovable
-2. Connect to your Supabase project
-3. This will enable:
-   - Real authentication
-   - Database operations
-   - File storage
-   - Message system
+**This connection will enable:**
+- Real authentication with email/password
+- PostgreSQL database operations
+- File storage capabilities
+- Real-time messaging system
+
+### **STEP 2: Database Schema Implementation**
+**Estimated Time: 30 minutes**
+
+Once Supabase is connected, we'll create the following tables:
 
 ### **Database Schema (To Be Created)**
 ```sql
@@ -300,11 +306,36 @@ The application is built with responsive design principles:
 - ✅ Demo functionality
 
 ### **Next Phase**: Backend Integration (2-3 hours)
-- Database schema creation
-- Real authentication
-- CRUD operations
-- File management
-- Message system
+
+**STEP 3: Authentication Integration** (45 minutes)
+- Replace mock authentication in `useAuth.ts` with Supabase Auth
+- Implement email/password authentication 
+- Add role-based access control with RLS policies
+- Update login flow to use real authentication
+
+**STEP 4: File Management System** (60 minutes)
+- Implement file upload functionality using Supabase Storage
+- Create file assignment system (Admin to Client/User)
+- Add file download and viewing capabilities
+- Implement access control for file operations
+
+**STEP 5: Messaging System** (45 minutes)
+- Create real-time messaging between roles
+- Implement message notifications
+- Add message history and read status
+- Build message management interface
+
+**STEP 6: Dashboard Data Integration** (30 minutes)
+- Replace mock data with real database queries
+- Add analytics and reporting for Admin
+- Implement user management for Clients
+- Add file and message counters for all roles
+
+**STEP 7: Advanced Features** (Optional - 1-2 hours)
+- File expiration and versioning
+- Download logging and activity tracking
+- Push notifications (future mobile app)
+- Advanced analytics and reporting
 
 ### **Total Project**: 5-6 hours for complete system
 
