@@ -40,16 +40,22 @@ const Index = () => {
   const [loginRole, setLoginRole] = useState<'admin' | 'client' | 'user'>('admin');
   const [showLanding, setShowLanding] = useState(true);
 
-  // Handle navigation to auth page
-  const handleLogin = () => {
-    window.location.href = '/auth';
+  // Handle user login
+  const handleLogin = async (userData: { email: string; role: string; clientId?: string }) => {
+    await login({
+      email: userData.email,
+      role: userData.role as 'admin' | 'client' | 'user',
+      clientId: userData.clientId
+    });
   };
 
-  // Handle role switching for demo (now redirects to auth)
+  // Handle role switching for demo
   const handleRoleSwitch = async (role: 'admin' | 'client' | 'user') => {
-    // For demo purposes, you could implement quick switching here
-    // For now, redirect to auth page
-    window.location.href = '/auth';
+    await login({
+      email: `demo-${role}@financehub.com`,
+      role: role,
+      clientId: role === 'client' ? 'demo-client-1' : undefined
+    });
   };
 
   // Handle navigation between routes
@@ -110,7 +116,7 @@ const Index = () => {
           <UserDashboard 
             onNavigate={handleNavigate}
             userData={{
-              name: user.fullName || user.email.split('@')[0] || 'User',
+              name: user.name || 'User',
               email: user.email,
               clientName: user.clientName || 'Company',
               assignedFiles: 7,
@@ -137,13 +143,12 @@ const Index = () => {
 
   // Show landing page first
   if (showLanding && !isAuthenticated) {
-    return <LandingPage onEnterPortal={() => window.location.href = '/auth'} />;
+    return <LandingPage onEnterPortal={() => setShowLanding(false)} />;
   }
 
-  // Redirect to auth page if not authenticated
+  // Show login form if not authenticated
   if (!isAuthenticated || !user) {
-    window.location.href = '/auth';
-    return null;
+    return <LoginForm onLogin={handleLogin} />;
   }
 
   // Show main dashboard with layout
