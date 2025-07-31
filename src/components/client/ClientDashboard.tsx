@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Users, 
   FileText, 
@@ -9,8 +11,16 @@ import {
   Download,
   Plus,
   Clock,
-  CheckCircle
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Eye
 } from 'lucide-react';
+import { useClientData } from '@/hooks/useClientData';
+import { useFileManagement } from '@/hooks/useFileManagement';
+import { AddTeamMemberModal } from '@/components/client/team/AddTeamMemberModal';
+import { TeamMemberCard } from '@/components/client/team/TeamMemberCard';
+import { FilePreviewModal } from '@/components/files/FilePreviewModal';
 
 /**
  * ClientDashboard Component
@@ -32,30 +42,99 @@ import {
 
 interface ClientDashboardProps {
   onNavigate: (path: string) => void;
-  clientData: {
-    companyName: string;
-    userCount: number;
-    assignedFiles: number;
-    recentMessages: number;
-  };
 }
 
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({ 
-  onNavigate, 
-  clientData 
+  onNavigate
 }) => {
-  // Mock data - will be replaced with real client-specific data from Supabase
-  const recentFiles = [
-    { id: 1, name: 'Monthly_Report_Dec.pdf', size: '2.4 MB', uploadedAt: '2 days ago', status: 'new' },
-    { id: 2, name: 'Team_Guidelines.docx', size: '856 KB', uploadedAt: '1 week ago', status: 'viewed' },
-    { id: 3, name: 'Project_Specs.xlsx', size: '1.2 MB', uploadedAt: '2 weeks ago', status: 'downloaded' },
-  ];
+  const { 
+    client, 
+    stats, 
+    teamMembers, 
+    isLoading, 
+    error, 
+    refreshData,
+    addTeamMember,
+    removeTeamMember,
+    updateTeamMember
+  } = useClientData();
 
-  const teamMembers = [
-    { id: 1, name: 'John Smith', email: 'john@company.com', lastActive: '2 hours ago', status: 'online' },
-    { id: 2, name: 'Sarah Johnson', email: 'sarah@company.com', lastActive: '1 day ago', status: 'offline' },
-    { id: 3, name: 'Mike Davis', email: 'mike@company.com', lastActive: '3 hours ago', status: 'online' },
-  ];
+  // Add file management hook
+  const {
+    files,
+    isLoading: filesLoading,
+    error: filesError,
+    downloadFile,
+    previewFile: previewFileFromHook
+  } = useFileManagement();
+
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+  
+  // Preview modal state
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewFile, setPreviewFile] = useState<any>(null);
+
+  // Get recent files (last 3 files) from real data
+  const recentFiles = files.slice(0, 3).map(file => ({
+    id: file.id,
+    name: file.original_filename,
+    size: file.file_size ? `${(file.file_size / 1024 / 1024).toFixed(1)} MB` : 'Unknown',
+    uploadedAt: new Date(file.created_at).toLocaleDateString(),
+    status: 'new' // You can enhance this based on access logs
+  }));
+
+  // Handle adding team member
+  const handleAddTeamMember = async (memberData: {
+    email: string;
+    full_name: string;
+    password: string;
+  }) => {
+    await addTeamMember(memberData);
+  };
+
+  // Handle editing team member
+  const handleEditTeamMember = (member: any) => {
+    setEditingMember(member);
+    // TODO: Implement edit modal
+  };
+
+  // Handle removing team member
+  const handleRemoveTeamMember = async (memberId: string) => {
+    await removeTeamMember(memberId);
+  };
+
+  // Handle file download
+  const handleDownloadFile = async (fileId: string) => {
+    try {
+      const file = files.find(f => f.id === fileId);
+      if (file) {
+        await downloadFile(file);
+      }
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      // You could add a toast notification here
+    }
+  };
+
+  // Handle file preview
+  const handlePreviewFile = (fileId: string) => {
+    const file = files.find(f => f.id === fileId);
+    if (file) {
+      setPreviewFile(file);
+      setShowPreviewModal(true);
+    }
+  };
+
+  // Check if file can be previewed
+  const canPreview = (mimeType: string | undefined | null): boolean => {
+    if (!mimeType) return false;
+    return (
+      mimeType.startsWith('image/') ||
+      mimeType === 'application/pdf' ||
+      mimeType.startsWith('text/')
+    );
+  };
 
   const StatusBadge = ({ status }: { status: string }) => {
     const styles = {
@@ -71,26 +150,81 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     );
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-4 w-48 mt-2" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-3 w-32 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={refreshData} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-client">
-            {clientData.companyName}
+            {client?.company_name || 'Your Company'}
           </h1>
           <p className="text-muted-foreground">
             Manage your team and access your resources
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => onNavigate('/client/users/add')} className="bg-client hover:bg-client/90">
+          <Button 
+            onClick={() => setShowAddMemberModal(true)} 
+            className="bg-client hover:bg-client/90"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Team Member
           </Button>
           <Button variant="outline" onClick={() => onNavigate('/client/messages/new')}>
             <MessageSquare className="mr-2 h-4 w-4" />
             Contact Admin
+          </Button>
+          <Button variant="outline" size="sm" onClick={refreshData}>
+            <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -103,7 +237,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <Users className="h-4 w-4 text-client" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clientData.userCount}</div>
+            <div className="text-2xl font-bold">{stats.teamMemberCount}</div>
             <p className="text-xs text-muted-foreground">Active users in your team</p>
           </CardContent>
         </Card>
@@ -114,7 +248,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <FileText className="h-4 w-4 text-client" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clientData.assignedFiles}</div>
+            <div className="text-2xl font-bold">{files.length}</div>
             <p className="text-xs text-muted-foreground">Files available to your team</p>
           </CardContent>
         </Card>
@@ -125,7 +259,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <MessageSquare className="h-4 w-4 text-client" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clientData.recentMessages}</div>
+            <div className="text-2xl font-bold">{stats.unreadMessagesCount}</div>
             <p className="text-xs text-muted-foreground">Unread messages</p>
           </CardContent>
         </Card>
@@ -136,7 +270,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <Download className="h-4 w-4 text-client" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.2 GB</div>
+            <div className="text-2xl font-bold">{stats.storageUsed}</div>
             <p className="text-xs text-muted-foreground">of allocated storage</p>
           </CardContent>
         </Card>
@@ -167,7 +301,24 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                   </div>
                   <div className="flex items-center space-x-2">
                     <StatusBadge status={file.status} />
-                    <Button size="sm" variant="outline">
+                    {canPreview(files.find(f => f.id === file.id)?.file_type) && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handlePreviewFile(file.id)}
+                        disabled={filesLoading}
+                        title="Preview file"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handleDownloadFile(file.id)}
+                      disabled={filesLoading}
+                      title="Download file"
+                    >
                       <Download className="h-4 w-4" />
                     </Button>
                   </div>
@@ -192,40 +343,37 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {teamMembers.map((member) => (
-                <div key={member.id} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 bg-client/10 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-client">
-                        {member.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.email}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center space-x-2">
-                      <div className={`h-2 w-2 rounded-full ${
-                        member.status === 'online' ? 'bg-success' : 'bg-muted-foreground'
-                      }`} />
-                      <span className="text-xs text-muted-foreground capitalize">
-                        {member.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {member.lastActive}
-                    </p>
-                  </div>
+              {teamMembers.length > 0 ? (
+                teamMembers.slice(0, 3).map((member) => (
+                  <TeamMemberCard
+                    key={member.id}
+                    member={member}
+                    onEdit={handleEditTeamMember}
+                    onDelete={handleRemoveTeamMember}
+                  />
+                ))
+              ) : (
+                <div className="text-center py-6">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground">No team members yet</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => setShowAddMemberModal(true)}
+                  >
+                    Add First Member
+                  </Button>
                 </div>
-              ))}
+              )}
             </div>
-            <div className="mt-4 pt-4 border-t">
-              <Button variant="outline" className="w-full" onClick={() => onNavigate('/client/team')}>
-                Manage Team
-              </Button>
-            </div>
+            {teamMembers.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <Button variant="outline" className="w-full" onClick={() => onNavigate('/client/team')}>
+                  {teamMembers.length > 3 ? `View All ${teamMembers.length} Members` : 'Manage Team'}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -275,6 +423,25 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Team Member Modal */}
+      <AddTeamMemberModal
+        isOpen={showAddMemberModal}
+        onClose={() => setShowAddMemberModal(false)}
+        onAdd={handleAddTeamMember}
+      />
+
+      {/* File Preview Modal */}
+      <FilePreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => {
+          setShowPreviewModal(false);
+          setPreviewFile(null);
+        }}
+        file={previewFile}
+        onDownload={downloadFile}
+        onPreview={previewFileFromHook}
+      />
     </div>
   );
 };

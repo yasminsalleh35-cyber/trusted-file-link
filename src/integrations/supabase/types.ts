@@ -141,36 +141,36 @@ export type Database = {
       }
       files: {
         Row: {
-          created_at: string | null
+          uploaded_at: string | null
           description: string | null
           file_size: number
-          file_type: string
-          filename: string
+          mime_type: string
+          name: string
           id: string
-          original_filename: string
-          storage_path: string
+          original_name: string
+          file_path: string
           uploaded_by: string
         }
         Insert: {
-          created_at?: string | null
+          uploaded_at?: string | null
           description?: string | null
           file_size: number
-          file_type: string
-          filename: string
+          mime_type: string
+          name: string
           id?: string
-          original_filename: string
-          storage_path: string
+          original_name: string
+          file_path: string
           uploaded_by: string
         }
         Update: {
-          created_at?: string | null
+          uploaded_at?: string | null
           description?: string | null
           file_size?: number
-          file_type?: string
-          filename?: string
+          mime_type?: string
+          name?: string
           id?: string
-          original_filename?: string
-          storage_path?: string
+          original_name?: string
+          file_path?: string
           uploaded_by?: string
         }
         Relationships: [

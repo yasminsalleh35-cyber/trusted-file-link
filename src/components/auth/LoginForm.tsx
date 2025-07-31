@@ -7,6 +7,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Mail, Lock, Building2, Shield, User, Users } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { AccessibleInput, AccessibleButton } from '@/components/ui/accessible-components';
+import { validateEmail, validatePassword, sanitizeInput } from '@/utils/validation';
+import { useErrorHandler } from '@/components/ui/error-boundary';
 
 /**
  * LoginForm Component
@@ -26,9 +30,14 @@ import { Loader2, Mail, Lock, Building2, Shield, User, Users } from 'lucide-reac
 
 interface LoginFormProps {
   onLogin: (userData: { email: string; role: string; clientId?: string }) => void;
+  onRegister?: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => {
+  // Get auth hook for real authentication
+  const { signIn } = useAuth();
+  const { handleError } = useErrorHandler();
+  
   // Form state management
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +45,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   const [isHuman, setIsHuman] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{email?: string; password?: string}>({});
 
   // Role-specific configuration for UI customization
   const roleConfig = {
@@ -64,42 +74,80 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
   const config = roleConfig[userType];
 
+  // Handle user type change - just update the selected type
+  const handleUserTypeChange = (value: 'admin' | 'client' | 'user') => {
+    setUserType(value);
+    // Don't auto-fill credentials - user enters their own
+  };
+
+  // Handle input changes with validation
+  const handleEmailChange = (value: string) => {
+    const sanitized = sanitizeInput(value);
+    setEmail(sanitized);
+    
+    // Real-time validation
+    try {
+      validateEmail(sanitized);
+      setFieldErrors(prev => ({ ...prev, email: undefined }));
+    } catch (error) {
+      setFieldErrors(prev => ({ ...prev, email: error instanceof Error ? error.message : 'Invalid email' }));
+    }
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    
+    // Real-time validation
+    try {
+      validatePassword(value);
+      setFieldErrors(prev => ({ ...prev, password: undefined }));
+    } catch (error) {
+      setFieldErrors(prev => ({ ...prev, password: error instanceof Error ? error.message : 'Invalid password' }));
+    }
+  };
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     setIsLoading(true);
 
     try {
-      // Basic validation
+      // Comprehensive validation
       if (!email || !password) {
         throw new Error('Please fill in all fields');
       }
 
-      // Email format validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        throw new Error('Please enter a valid email address');
-      }
+      // Validate email
+      validateEmail(email);
+      
+      // Validate password
+      validatePassword(password);
 
       // Human verification check
       if (!isHuman) {
         throw new Error('Please verify that you are human');
       }
 
-      // TODO: Integrate with Supabase authentication
-      // For now, simulate authentication logic
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock successful login - replace with actual Supabase auth
-      onLogin({
-        email,
-        role: userType,
-        clientId: userType !== 'admin' ? 'mock-client-id' : undefined
+      // Use real Supabase authentication with demo login validation
+      const result = await signIn({
+        email: sanitizeInput(email),
+        password,
+        selectedDemoLogin: userType
       });
 
+      if (!result.success) {
+        throw new Error(result.error || 'Login failed');
+      }
+
+      // The useAuth hook will automatically update the user state
+      // No need to call onLogin as the auth state change will trigger re-render
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
+      handleError(err instanceof Error ? err : new Error(errorMessage), 'LoginForm');
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +171,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             {/* Demo Login As Selection */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Demo Login As</Label>
-              <Select value={userType} onValueChange={(value: 'admin' | 'client' | 'user') => setUserType(value)}>
+              <Select value={userType} onValueChange={handleUserTypeChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -151,44 +199,32 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             </div>
 
             {/* Email Input */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email Address
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
+            <AccessibleInput
+              id="email"
+              label="Email Address"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              disabled={isLoading}
+              required
+              error={fieldErrors.email}
+              helperText="Enter your registered email address"
+            />
 
             {/* Password Input */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Password
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  disabled={isLoading}
-                  required
-                />
-              </div>
-            </div>
+            <AccessibleInput
+              id="password"
+              label="Password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => handlePasswordChange(e.target.value)}
+              disabled={isLoading}
+              required
+              error={fieldErrors.password}
+              helperText="Enter your account password"
+            />
 
             {/* Human Verification */}
             <div className="space-y-2">
@@ -213,24 +249,47 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             )}
 
             {/* Submit Button */}
-            <Button
+            <AccessibleButton
               type="submit"
               className={`w-full ${config.buttonClass}`}
-              disabled={isLoading}
+              disabled={isLoading || !!fieldErrors.email || !!fieldErrors.password}
+              isLoading={isLoading}
+              loadingText="Signing In..."
+              ariaLabel={`Sign in as ${userType}`}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing In...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </Button>
+              Sign In
+            </AccessibleButton>
           </form>
 
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 bg-muted/30 rounded-lg">
+            <h4 className="text-sm font-medium mb-2">Demo Credentials:</h4>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p><strong>Admin:</strong> admin@financehub.com / admin123456</p>
+              <p><strong>Client:</strong> client@acme.com / client123456</p>
+              <p><strong>User:</strong> user@acme.com / user123456</p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Select the appropriate role above and use the matching credentials
+            </p>
+          </div>
+
+          {/* Registration Link */}
+          {onRegister && (
+            <div className="mt-4 text-center">
+              <Button
+                type="button"
+                variant="link"
+                onClick={onRegister}
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                Don't have an account? Register here
+              </Button>
+            </div>
+          )}
+
           {/* Additional Links */}
-          <div className="mt-6 text-center">
+          <div className="mt-2 text-center">
             <p className="text-sm text-muted-foreground">
               Need help? Contact your administrator
             </p>

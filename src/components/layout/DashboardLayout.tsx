@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
@@ -50,7 +51,6 @@ interface DashboardLayoutProps {
   userEmail: string;
   onLogout: () => void;
   navigation: NavigationItem[];
-  onNavigate: (href: string) => void;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -58,10 +58,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   userRole,
   userEmail,
   onLogout,
-  navigation,
-  onNavigate
+  navigation
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
 
   // Role-specific configuration
   const roleConfig = {
@@ -131,25 +131,28 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Navigation */}
         <nav className="mt-6 px-4">
           <div className="space-y-2">
-            {navigation.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => {
-                  onNavigate(item.href);
-                  setSidebarOpen(false);
-                }}
-                className={`
-                  w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
-                  ${item.current 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'text-foreground hover:bg-muted hover:text-foreground'
-                  }
-                `}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {item.name}
-              </button>
-            ))}
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href || 
+                              (item.href !== '/admin/dashboard' && item.href !== '/client/dashboard' && item.href !== '/user/dashboard' && location.pathname.startsWith(item.href));
+              
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`
+                    w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
+                    ${isActive 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'text-foreground hover:bg-muted hover:text-foreground'
+                    }
+                  `}
+                >
+                  <span className="mr-3">{item.icon}</span>
+                  {item.name}
+                </Link>
+              );
+            })}
           </div>
         </nav>
       </div>

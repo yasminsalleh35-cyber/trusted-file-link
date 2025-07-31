@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { LoginForm } from '@/components/auth/LoginForm';
+import { RegistrationForm } from '@/components/auth/RegistrationForm';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { LandingPage } from '@/components/landing/LandingPage';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -39,14 +40,12 @@ const Index = () => {
   const [currentRoute, setCurrentRoute] = useState('/dashboard');
   const [loginRole, setLoginRole] = useState<'admin' | 'client' | 'user'>('admin');
   const [showLanding, setShowLanding] = useState(true);
+  const [showRegistration, setShowRegistration] = useState(false);
 
-  // Handle user login
+  // Handle user login (legacy - actual login is handled by LoginForm directly)
   const handleLogin = async (userData: { email: string; role: string; clientId?: string }) => {
-    await login({
-      email: userData.email,
-      role: userData.role as 'admin' | 'client' | 'user',
-      clientId: userData.clientId
-    });
+    // Login is now handled directly by the LoginForm component
+    // This function is kept for compatibility but does nothing
   };
 
   // Handle role switching for demo
@@ -146,9 +145,29 @@ const Index = () => {
     return <LandingPage onEnterPortal={() => setShowLanding(false)} />;
   }
 
+  // Show registration form
+  if (showRegistration) {
+    return (
+      <RegistrationForm
+        onRegistrationSuccess={() => {
+          setShowRegistration(false);
+          // User will be automatically logged in after registration
+        }}
+        onBackToLogin={() => setShowRegistration(false)}
+        allowedRoles={['client', 'user']} // Don't allow admin registration
+        defaultRole="user"
+      />
+    );
+  }
+
   // Show login form if not authenticated
   if (!isAuthenticated || !user) {
-    return <LoginForm onLogin={handleLogin} />;
+    return (
+      <LoginForm 
+        onLogin={handleLogin} 
+        onRegister={() => setShowRegistration(true)}
+      />
+    );
   }
 
   // Show main dashboard with layout
