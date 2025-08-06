@@ -266,7 +266,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
             <h4 className="text-sm font-medium mb-2">Demo Credentials:</h4>
             <div className="text-xs text-muted-foreground space-y-1">
               <p><strong>Admin:</strong> admin@financehub.com / urL!fKNZ8GSn</p>
-              <p><strong>Admin:</strong> yasmin@project.com / !P@ssw0rd!</p>
               <p><strong>Client:</strong> testclient@example.com / urL!fKNZ8GSn</p>
               <p><strong>User:</strong> testuser@example.com / urL!fKNZ8GSn</p>
             </div>
