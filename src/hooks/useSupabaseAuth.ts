@@ -3,17 +3,19 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 import { validateSession, debugAuthState } from '@/lib/auth-utils';
+import { JWTAuthService, type JWTPayload } from '@/services/jwtAuth';
 
 /**
- * Enhanced useAuth Hook with Supabase Integration
+ * Enhanced useAuth Hook with JWT + Supabase Integration
  * 
- * Purpose: Manage authentication state with real Supabase backend
+ * Purpose: Manage authentication state with JWT tokens and Supabase backend
  * Features:
- * - Real Supabase authentication
+ * - JWT token-based authentication
+ * - Supabase backend integration for data access
  * - Profile management with database integration
  * - Role-based access control
  * - Automatic profile creation for new users
- * - Session persistence
+ * - Token persistence and refresh
  */
 
 type UserRole = Database['public']['Enums']['user_role'];
@@ -49,37 +51,87 @@ export const useSupabaseAuth = () => {
     let isMounted = true;
     let initializationTimeout: NodeJS.Timeout;
     
-    // Get initial session with timeout and retry logic
+    // Initialize authentication with JWT tokens
     const initializeAuth = async (retryCount = 0) => {
       try {
-        console.log('Initializing auth, attempt:', retryCount + 1);
-        
-        // Add timeout to prevent hanging
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => {
-          initializationTimeout = setTimeout(() => reject(new Error('Session check timeout')), 10000);
-        });
-        
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
-        
-        if (initializationTimeout) {
-          clearTimeout(initializationTimeout);
-        }
+        console.log('🔐 JWT Auth: Initializing auth, attempt:', retryCount + 1);
         
         if (!isMounted) return; // Prevent state updates if component unmounted
         
-        console.log('Session check result:', session ? 'Session found' : 'No session');
+        // First, check for JWT token
+        const jwtUser = await JWTAuthService.getCurrentUser();
         
-        if (session?.user) {
-          console.log('Loading user profile for session user:', session.user.id);
+        if (jwtUser && !JWTAuthService.isTokenExpired()) {
+          console.log('✅ JWT token found and valid, user:', jwtUser.email);
+          
+          if (isMounted) {
+            setAuthState({
+              user: {
+                id: jwtUser.userId,
+                email: jwtUser.email,
+                role: jwtUser.role,
+                full_name: jwtUser.full_name,
+                client_id: jwtUser.client_id,
+                client_name: jwtUser.client_name
+              },
+              isLoading: false,
+              isAuthenticated: true
+            });
+          }
+          return; // Exit early if JWT is valid
+        }
+        
+        // If JWT token exists but is expired, try to refresh
+        if (jwtUser && JWTAuthService.isTokenExpired()) {
+          console.log('🔄 JWT token expired, attempting refresh...');
+          
+          const refreshResult = await JWTAuthService.refreshTokens();
+          if (refreshResult.success && refreshResult.user && isMounted) {
+            console.log('✅ JWT token refreshed successfully');
+            setAuthState({
+              user: {
+                id: refreshResult.user.userId,
+                email: refreshResult.user.email,
+                role: refreshResult.user.role,
+                full_name: refreshResult.user.full_name,
+                client_id: refreshResult.user.client_id,
+                client_name: refreshResult.user.client_name
+              },
+              isLoading: false,
+              isAuthenticated: true
+            });
+            return;
+          } else {
+            console.log('❌ JWT token refresh failed, clearing tokens');
+            JWTAuthService.clearTokens();
+          }
+        }
+        
+        console.log('❌ No valid JWT token found, checking Supabase session...');
+        
+        // Fallback: check Supabase session for backward compatibility
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          if (retryCount < 1 && isMounted) {
+            setTimeout(() => initializeAuth(retryCount + 1), 2000);
+            return;
+          }
+        }
+
+        if (session?.user && isMounted) {
+          console.log('📝 Supabase session found, migrating to JWT...');
           await loadUserProfile(session.user);
         } else {
-          console.log('No session found, setting unauthenticated state');
-          setAuthState({
-            user: null,
-            isLoading: false,
-            isAuthenticated: false
-          });
+          console.log('❌ No session found, setting unauthenticated state');
+          if (isMounted) {
+            setAuthState({
+              user: null,
+              isLoading: false,
+              isAuthenticated: false
+            });
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -114,47 +166,126 @@ export const useSupabaseAuth = () => {
       async (event, session) => {
         if (!isMounted) return;
         
-        console.log('Auth state change event:', event, session ? 'with session' : 'no session');
+        console.log('🔔 Auth state change event:', event, session ? 'with session' : 'no session');
+        
+        // ALWAYS defer to JWT authentication if JWT tokens are present and valid
+        try {
+          const currentJWTUser = await JWTAuthService.getCurrentUser();
+          if (currentJWTUser && !JWTAuthService.isTokenExpired()) {
+            console.log('⏭️ JWT tokens are valid - completely ignoring Supabase auth event');
+            
+            // Ensure auth state is correct if JWT is valid but state is not set
+            if (!authState.isAuthenticated && isMounted) {
+              console.log('🔧 JWT valid but auth state not set - fixing auth state');
+              setAuthState({
+                user: {
+                  id: currentJWTUser.userId,
+                  email: currentJWTUser.email,
+                  role: currentJWTUser.role,
+                  full_name: currentJWTUser.full_name,
+                  client_id: currentJWTUser.client_id,
+                  client_name: currentJWTUser.client_name
+                },
+                isLoading: false,
+                isAuthenticated: true
+              });
+            }
+            return; // ALWAYS skip Supabase processing if JWT is valid
+          }
+        } catch (jwtError) {
+          console.warn('JWT check failed in auth state change:', jwtError);
+        }
+        
+        // Only process Supabase events if NO valid JWT tokens exist
+        console.log('🔄 No valid JWT found - processing Supabase auth event');
         
         try {
           if (event === 'SIGNED_IN' && session?.user) {
-            console.log('Processing SIGNED_IN event');
+            console.log('🔄 Processing SIGNED_IN event (no JWT)');
             await loadUserProfile(session.user);
           } else if (event === 'SIGNED_OUT') {
-            console.log('Processing SIGNED_OUT event');
+            console.log('🔄 Processing SIGNED_OUT event');
+            JWTAuthService.clearTokens();
             setAuthState({
               user: null,
               isLoading: false,
               isAuthenticated: false
             });
           } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-            console.log('Processing TOKEN_REFRESHED event');
+            console.log('🔄 Processing TOKEN_REFRESHED event (no JWT)');
             // Don't reload profile on token refresh, just ensure we're still authenticated
             if (!authState.isAuthenticated) {
               await loadUserProfile(session.user);
             }
           }
         } catch (error) {
-          console.error('Error handling auth state change:', error);
+          console.error('❌ Error handling auth state change:', error);
           // Don't set error state here, let the user stay logged in if possible
         }
       }
     );
 
-    // Handle browser visibility changes to refresh session when user returns
+    // Handle browser visibility changes to refresh JWT tokens when user returns
     const handleVisibilityChange = async () => {
-      if (!document.hidden && isMounted && authState.isAuthenticated) {
+      if (!document.hidden && isMounted) {
         try {
-          console.log('Browser became visible, checking session...');
-          const { data: { session }, error } = await supabase.auth.getSession();
+          console.log('🔍 Browser became visible, checking JWT tokens...');
           
-          if (error) {
-            console.error('Session check error on visibility change:', error);
-            return;
+          // Check JWT token first
+          const jwtUser = await JWTAuthService.getCurrentUser();
+          
+          if (jwtUser && !JWTAuthService.isTokenExpired()) {
+            console.log('✅ JWT token still valid on visibility change');
+            
+            // Ensure auth state is correct if JWT is valid
+            if (!authState.isAuthenticated && isMounted) {
+              console.log('🔧 JWT valid but auth state incorrect - fixing it');
+              setAuthState({
+                user: {
+                  id: jwtUser.userId,
+                  email: jwtUser.email,
+                  role: jwtUser.role,
+                  full_name: jwtUser.full_name,
+                  client_id: jwtUser.client_id,
+                  client_name: jwtUser.client_name
+                },
+                isLoading: false,
+                isAuthenticated: true
+              });
+            }
+            return; // JWT token is valid, no need to check Supabase
           }
           
-          if (!session) {
-            console.log('No session found on visibility change, signing out');
+          // If JWT token is expired or invalid, try to refresh
+          if (JWTAuthService.isTokenExpired()) {
+            console.log('🔄 JWT token expired on visibility change, attempting refresh...');
+            
+            const refreshResult = await JWTAuthService.refreshTokens();
+            if (refreshResult.success && refreshResult.user && isMounted) {
+              console.log('✅ JWT token refreshed successfully on visibility change');
+              setAuthState({
+                user: {
+                  id: refreshResult.user.userId,
+                  email: refreshResult.user.email,
+                  role: refreshResult.user.role,
+                  full_name: refreshResult.user.full_name,
+                  client_id: refreshResult.user.client_id,
+                  client_name: refreshResult.user.client_name
+                },
+                isLoading: false,
+                isAuthenticated: true
+              });
+              return;
+            }
+          }
+          
+          // If JWT refresh failed, check Supabase session as fallback
+          console.log('JWT refresh failed, checking Supabase session...');
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error || !session) {
+            console.log('No valid session found on visibility change, signing out');
+            JWTAuthService.clearTokens();
             setAuthState({
               user: null,
               isLoading: false,
@@ -162,7 +293,8 @@ export const useSupabaseAuth = () => {
             });
           }
         } catch (error) {
-          console.error('Error checking session on visibility change:', error);
+          console.error('Error checking tokens on visibility change:', error);
+          // Don't sign out on error, just log it
         }
       }
     };
@@ -183,10 +315,14 @@ export const useSupabaseAuth = () => {
   const loadUserProfile = async (supabaseUser: SupabaseUser, retryCount = 0) => {
     try {
       console.log('Loading user profile for:', supabaseUser.id, 'attempt:', retryCount + 1);
-      setAuthState(prev => ({ ...prev, isLoading: true }));
+      
+      // Only set loading state on first attempt to avoid flickering
+      if (retryCount === 0) {
+        setAuthState(prev => ({ ...prev, isLoading: true }));
+      }
 
-      // Add timeout to profile loading
-      const profilePromise = supabase
+      // Simplified profile query without timeout for better reliability
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select(`
           *,
@@ -196,15 +332,6 @@ export const useSupabaseAuth = () => {
         `)
         .eq('id', supabaseUser.id)
         .single();
-
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile load timeout')), 8000);
-      });
-
-      const { data: profileData, error: profileError } = await Promise.race([
-        profilePromise,
-        timeoutPromise
-      ]) as any;
 
       if (profileError) {
         console.error('Error loading profile:', profileError);
@@ -216,14 +343,16 @@ export const useSupabaseAuth = () => {
           return;
         }
         
-        // Retry on network errors
-        if (retryCount < 2 && (
+        // Retry on network errors with exponential backoff
+        if (retryCount < 1 && (
           profileError.message?.includes('timeout') ||
           profileError.message?.includes('network') ||
-          profileError.message?.includes('fetch')
+          profileError.message?.includes('fetch') ||
+          profileError.code === 'PGRST301' // Connection error
         )) {
           console.log('Retrying profile load due to network error...');
-          setTimeout(() => loadUserProfile(supabaseUser, retryCount + 1), 1000);
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 3000); // Max 3 seconds
+          setTimeout(() => loadUserProfile(supabaseUser, retryCount + 1), delay);
           return;
         }
         
@@ -258,7 +387,7 @@ export const useSupabaseAuth = () => {
       console.error('Error loading user profile:', error);
       
       // Only set unauthenticated state if we've exhausted retries
-      if (retryCount >= 2) {
+      if (retryCount >= 1) {
         console.log('Max retries reached, setting unauthenticated state');
         setAuthState({
           user: null,
@@ -266,8 +395,8 @@ export const useSupabaseAuth = () => {
           isAuthenticated: false
         });
       } else {
-        // Keep loading state for retries
-        console.log('Keeping loading state for retry');
+        // Keep loading state for retries but don't show "Verifying access..." indefinitely
+        console.log('Will retry profile load...');
       }
     }
   };
@@ -449,7 +578,7 @@ export const useSupabaseAuth = () => {
     }
   };
 
-  // Sign in user
+  // Sign in user with JWT tokens
   const signIn = async (credentials: {
     email: string;
     password: string;
@@ -458,53 +587,49 @@ export const useSupabaseAuth = () => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true }));
 
-      // No credential validation here - just authenticate with Supabase
-      // Role validation happens after authentication
+      console.log('🔐 JWT Auth: Starting sign in process...');
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password
-      });
+      // Use JWT authentication service
+      const jwtResult = await JWTAuthService.signInWithJWT(credentials);
 
-      if (error) throw error;
-
-      if (data.user) {
-        console.log('Login successful, user ID:', data.user.id);
-        
-        // Get user profile for role validation and redirect
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
-
-        console.log('Profile query result:', { profileData, profileError });
-
-        if (profileError) {
-          console.error('Error loading profile for login:', profileError);
-          throw new Error('User profile not found. Please contact administrator.');
-        }
-
-        const actualRole = profileData.role;
-        console.log('User role:', actualRole, 'Selected demo:', credentials.selectedDemoLogin);
-
-        // Role-based demo validation: check if user's actual role matches selected demo type
-        if (credentials.selectedDemoLogin) {
-          if (actualRole !== credentials.selectedDemoLogin) {
-            // Sign out the user since role doesn't match
-            await supabase.auth.signOut();
-            throw new Error(`Access denied: You selected ${credentials.selectedDemoLogin} login but your account has ${actualRole} role. Please select the correct demo type for your role.`);
-          }
-        }
-
-        // Load the full user profile (this will update authState)
-        await loadUserProfile(data.user);
-        
-        console.log('Profile loaded successfully, auth state should be updated');
+      if (!jwtResult.success) {
+        throw new Error(jwtResult.error || 'JWT authentication failed');
       }
 
-      return { success: true, data };
+      if (jwtResult.user) {
+        console.log('✅ JWT Auth: Sign in successful for user:', jwtResult.user.email);
+        
+        // Update auth state with JWT user data
+        setAuthState({
+          user: {
+            id: jwtResult.user.userId,
+            email: jwtResult.user.email,
+            role: jwtResult.user.role,
+            full_name: jwtResult.user.full_name,
+            client_id: jwtResult.user.client_id,
+            client_name: jwtResult.user.client_name
+          },
+          isLoading: false,
+          isAuthenticated: true
+        });
+
+        console.log('✅ JWT Auth: Auth state updated successfully');
+      }
+
+      return { 
+        success: true, 
+        data: jwtResult,
+        user: jwtResult.user ? {
+          id: jwtResult.user.userId,
+          email: jwtResult.user.email,
+          role: jwtResult.user.role,
+          full_name: jwtResult.user.full_name,
+          client_id: jwtResult.user.client_id,
+          client_name: jwtResult.user.client_name
+        } : undefined
+      };
     } catch (error) {
+      console.error('❌ JWT Auth: Sign in failed:', error);
       setAuthState(prev => ({ ...prev, isLoading: false }));
       return {
         success: false,
@@ -513,21 +638,30 @@ export const useSupabaseAuth = () => {
     }
   };
 
-  // Sign out user
+  // Sign out user with JWT cleanup
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      console.log('🔐 JWT Auth: Starting sign out process...');
 
+      // Use JWT authentication service to sign out
+      const jwtResult = await JWTAuthService.signOut();
+
+      if (!jwtResult.success) {
+        console.warn('JWT sign out warning:', jwtResult.error);
+      }
+
+      // Update auth state
       setAuthState({
         user: null,
         isLoading: false,
         isAuthenticated: false
       });
 
+      console.log('✅ JWT Auth: Sign out successful');
+
       return { success: true };
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('❌ JWT Auth: Sign out error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Sign out failed'

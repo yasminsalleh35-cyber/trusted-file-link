@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { JWTDebugPanel } from '@/components/debug/JWTDebugPanel';
 import { 
   Users, 
   Building2, 
@@ -288,6 +289,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
           </div>
         </CardContent>
       </Card>
+
+      {/* JWT Debug Panel - Development Only */}
+      <JWTDebugPanel />
     </div>
   );
 };

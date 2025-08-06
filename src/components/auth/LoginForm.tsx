@@ -265,9 +265,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
           <div className="mt-6 p-4 bg-muted/30 rounded-lg">
             <h4 className="text-sm font-medium mb-2">Demo Credentials:</h4>
             <div className="text-xs text-muted-foreground space-y-1">
-              <p><strong>Admin:</strong> admin@financehub.com / admin123456</p>
-              <p><strong>Client:</strong> client@acme.com / client123456</p>
-              <p><strong>User:</strong> user@acme.com / user123456</p>
+              <p><strong>Admin:</strong> admin@financehub.com / urL!fKNZ8GSn</p>
+              <p><strong>Admin:</strong> yasmin@project.com / !P@ssw0rd!</p>
+              <p><strong>Client:</strong> testclient@example.com / urL!fKNZ8GSn</p>
+              <p><strong>User:</strong> testuser@example.com / urL!fKNZ8GSn</p>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Select the appropriate role above and use the matching credentials
