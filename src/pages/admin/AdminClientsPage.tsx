@@ -39,27 +39,27 @@ const AdminClientsPage: React.FC = () => {
   // Admin navigation items
   const navigationItems = [
     { 
-      name: 'Dashboard', 
+      name: 'Mining HQ', 
       href: '/admin/dashboard', 
       icon: <BarChart3 className="h-5 w-5" />
     },
     { 
-      name: 'Clients', 
+      name: 'Mining Companies', 
       href: '/admin/clients', 
       icon: <Building2 className="h-5 w-5" />
     },
     { 
-      name: 'Users', 
+      name: 'Workers', 
       href: '/admin/users', 
       icon: <Users className="h-5 w-5" />
     },
     { 
-      name: 'Files', 
+      name: 'Documents', 
       href: '/admin/files', 
       icon: <FileText className="h-5 w-5" />
     },
     { 
-      name: 'Messages', 
+      name: 'Communications', 
       href: '/admin/messages', 
       icon: <MessageSquare className="h-5 w-5" />
     },
@@ -85,9 +85,9 @@ const AdminClientsPage: React.FC = () => {
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Client Management</h1>
+            <h1 className="text-2xl font-bold text-foreground">Mining Company Management</h1>
             <p className="text-muted-foreground">
-              Manage companies and their access to the portal
+              Manage mining companies and their access to the operations portal
             </p>
           </div>
           <Button 

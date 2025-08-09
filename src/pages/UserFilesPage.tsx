@@ -68,12 +68,12 @@ const UserFilesPage: React.FC = () => {
       icon: <BarChart3 className="h-5 w-5" />
     },
     { 
-      name: 'My Files', 
+      name: 'Safety Documents', 
       href: '/user/files', 
       icon: <FileText className="h-5 w-5" />
     },
     { 
-      name: 'Messages', 
+      name: 'Site Updates', 
       href: '/user/messages', 
       icon: <MessageSquare className="h-5 w-5" />
     },
@@ -124,9 +124,9 @@ const UserFilesPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">My Files</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Safety Documents</h1>
             <p className="text-muted-foreground">
-              Access and download files assigned to you
+              Access safety protocols and operational documents assigned to you
             </p>
           </div>
           <Button variant="outline" onClick={refreshData}>
@@ -146,7 +146,7 @@ const UserFilesPage: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Assigned Files</CardTitle>
+              <CardTitle className="text-sm font-medium">Safety Documents</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -155,13 +155,13 @@ const UserFilesPage: React.FC = () => {
               ) : (
                 <div className="text-2xl font-bold">{stats.totalFiles}</div>
               )}
-              <p className="text-xs text-muted-foreground">Files available to you</p>
+              <p className="text-xs text-muted-foreground">Safety protocols assigned</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Size</CardTitle>
+              <CardTitle className="text-sm font-medium">Document Size</CardTitle>
               <HardDrive className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -170,13 +170,13 @@ const UserFilesPage: React.FC = () => {
               ) : (
                 <div className="text-2xl font-bold">{formatFileSize(stats.totalSize)}</div>
               )}
-              <p className="text-xs text-muted-foreground">Total file size</p>
+              <p className="text-xs text-muted-foreground">Total document size</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recent Files</CardTitle>
+              <CardTitle className="text-sm font-medium">New Updates</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -197,7 +197,7 @@ const UserFilesPage: React.FC = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search files..."
+                  placeholder="Search safety documents..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -247,11 +247,11 @@ const UserFilesPage: React.FC = () => {
           <Card>
             <CardContent className="p-8 text-center">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No files found</h3>
+              <h3 className="text-lg font-medium mb-2">No safety documents found</h3>
               <p className="text-muted-foreground mb-4">
                 {searchTerm 
-                  ? 'No files match your search criteria.' 
-                  : 'No files have been assigned to you yet.'
+                  ? 'No safety documents match your search criteria.' 
+                  : 'No safety documents have been assigned to you yet.'
                 }
               </p>
               {searchTerm && (

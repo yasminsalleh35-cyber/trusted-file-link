@@ -133,17 +133,17 @@ const AdminFileManagementPage: React.FC = () => {
   // Admin navigation items
   const navigationItems = [
     { 
-      name: 'Dashboard', 
+      name: 'Mining HQ', 
       href: '/admin/dashboard', 
       icon: <BarChart3 className="h-5 w-5" />
     },
     { 
-      name: 'Users', 
+      name: 'Mining Sites', 
       href: '/admin/users', 
       icon: <Users className="h-5 w-5" />
     },
     { 
-      name: 'Files', 
+      name: 'Documents', 
       href: '/admin/files', 
       icon: <FileText className="h-5 w-5" />
     },
@@ -353,9 +353,9 @@ const AdminFileManagementPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">File Management</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Mining Document Management</h1>
             <p className="text-muted-foreground">
-              Upload, manage, and assign files to users and clients
+              Upload, manage, and assign safety documents and operational files to mining sites and workers
             </p>
             {selectedFiles.size > 0 && (
               <div className="mt-2">
@@ -386,7 +386,7 @@ const AdminFileManagementPage: React.FC = () => {
           <div className="flex gap-2">
             <Button onClick={() => setShowUploadZone(!showUploadZone)}>
               <Plus className="mr-2 h-4 w-4" />
-              {showUploadZone ? 'Hide Upload' : 'Upload Files'}
+              {showUploadZone ? 'Hide Upload' : 'Upload Documents'}
             </Button>
             <Button variant="outline" onClick={refreshData}>
               <RefreshCw className="h-4 w-4" />

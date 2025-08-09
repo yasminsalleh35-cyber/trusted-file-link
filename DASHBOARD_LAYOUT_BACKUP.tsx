@@ -1,3 +1,7 @@
+// BACKUP OF ORIGINAL DASHBOARD LAYOUT
+// Created before implementing Option 1 (full-width focused layout)
+// This file preserves the current state for potential reversion
+
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +25,7 @@ import {
 import { AnimatedBackground } from './AnimatedBackground';
 
 /**
- * DashboardLayout Component
+ * DashboardLayout Component - BACKUP VERSION
  * 
  * Purpose: Main layout wrapper for all dashboard pages
  * Features:
@@ -53,7 +57,7 @@ interface DashboardLayoutProps {
   navigation: NavigationItem[];
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+export const DashboardLayoutBackup: React.FC<DashboardLayoutProps> = ({
   children,
   userRole,
   userEmail,
@@ -97,15 +101,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50"
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Slide-out Navigation Sidebar (Mobile/Desktop) */}
+      {/* Sidebar */}
       <div className={`
         fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        lg:translate-x-0 lg:static lg:inset-0
       `}>
         {/* Sidebar header */}
         <div className={`${config.bgClass} p-6`}>
@@ -116,7 +121,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <Button
               variant="ghost"
               size="sm"
-              className={`${config.textClass} hover:bg-white/20`}
+              className={`lg:hidden ${config.textClass} hover:bg-white/20`}
               onClick={() => setSidebarOpen(false)}
             >
               <X className="h-5 w-5" />
@@ -156,27 +161,29 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </nav>
       </div>
 
-      {/* Full-width layout - No fixed sidebar */}
-      <div className="w-full">
-        {/* Clean header like Image 2 */}
+      {/* Main content */}
+      <div className="lg:pl-64">
+        {/* Top header */}
         <header className="bg-card/80 backdrop-blur-sm shadow-sm border-b relative z-10">
           <div className="flex items-center justify-between px-6 py-4">
-            {/* Left side - Hamburger menu and page title */}
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSidebarOpen(true)}
-                className="p-2"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
+            {/* Mobile menu button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+
+            {/* Page title - will be updated based on current page */}
+            <div className="flex-1 lg:flex-none">
               <h2 className="text-xl font-semibold text-foreground">
                 Dashboard
               </h2>
             </div>
 
-            {/* Right side - Notifications and user */}
+            {/* Header actions */}
             <div className="flex items-center space-x-4">
               {/* Notifications */}
               <Button variant="ghost" size="sm" className="relative">
@@ -184,13 +191,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-destructive rounded-full"></span>
               </Button>
 
-              {/* User dropdown - simplified like Image 2 */}
+              {/* User dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center space-x-2">
-                    <span className="text-sm font-medium">
-                      {getUserInitials(userEmail)}
-                    </span>
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="text-xs">
+                        {getUserInitials(userEmail)}
+                      </AvatarFallback>
+                    </Avatar>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -219,7 +228,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
         </header>
 
-        {/* Full-width main content - like Image 2 */}
+        {/* Main content area */}
         <main className="p-6 relative z-10">
           {children}
         </main>

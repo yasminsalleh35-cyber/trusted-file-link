@@ -50,22 +50,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
   // Role-specific configuration for UI customization
   const roleConfig = {
     admin: {
-      title: 'Admin Portal',
-      description: 'Manage clients, users, and system settings',
+      title: 'Mining HQ Portal',
+      description: 'Oversee mining operations, manage companies and workers',
       icon: <Shield className="h-6 w-6 text-admin" />,
       buttonClass: 'bg-admin hover:bg-admin/90',
       accentColor: 'border-l-4 border-l-admin'
     },
     client: {
-      title: 'Client Portal',
-      description: 'Manage your team and access your files',
+      title: 'Mining Site Portal',
+      description: 'Manage your mining crew and operational resources',
       icon: <Building2 className="h-6 w-6 text-client" />,
       buttonClass: 'bg-client hover:bg-client/90',
       accentColor: 'border-l-4 border-l-client'
     },
     user: {
-      title: 'User Portal',
-      description: 'Access your assigned files and messages',
+      title: 'Miner Portal',
+      description: 'Access safety documents and site communications',
       icon: <User className="h-6 w-6 text-user" />,
       buttonClass: 'bg-user hover:bg-user/90',
       accentColor: 'border-l-4 border-l-user'
@@ -179,19 +179,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
                   <SelectItem value="admin">
                     <div className="flex items-center space-x-2">
                       <Shield className="h-4 w-4 text-admin" />
-                      <span>Admin - Full System Access</span>
+                      <span>Mining HQ - Full Operations Control</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="client">
                     <div className="flex items-center space-x-2">
                       <Building2 className="h-4 w-4 text-client" />
-                      <span>Client - Team Management</span>
+                      <span>Mining Site - Crew Management</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="user">
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-user" />
-                      <span>User - File Access</span>
+                      <span>Miner - Safety & Documents</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -263,14 +263,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
 
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-            <h4 className="text-sm font-medium mb-2">Demo Credentials:</h4>
+            <h4 className="text-sm font-medium mb-2">Demo Mining Access:</h4>
             <div className="text-xs text-muted-foreground space-y-1">
-              <p><strong>Admin:</strong> admin@financehub.com / urL!fKNZ8GSn</p>
-              <p><strong>Client:</strong> testclient@example.com / urL!fKNZ8GSn</p>
-              <p><strong>User:</strong> testuser@example.com / urL!fKNZ8GSn</p>
+              <p><strong>Mining HQ:</strong> admin@financehub.com / urL!fKNZ8GSn</p>
+              <p><strong>Site Manager:</strong> testclient@example.com / urL!fKNZ8GSn</p>
+              <p><strong>Miner:</strong> testuser@example.com / urL!fKNZ8GSn</p>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Select the appropriate role above and use the matching credentials
+              Select your mining role above and use the matching credentials
             </p>
           </div>
 
@@ -291,7 +291,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
           {/* Additional Links */}
           <div className="mt-2 text-center">
             <p className="text-sm text-muted-foreground">
-              Need help? Contact your administrator
+              Need help? Contact Mining HQ Support
             </p>
           </div>
         </CardContent>

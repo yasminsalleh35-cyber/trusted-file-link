@@ -14,7 +14,15 @@ import {
   CheckCircle,
   AlertCircle,
   RefreshCw,
-  Eye
+  Eye,
+  HardHat,
+  Pickaxe,
+  Mountain,
+  Truck,
+  Shield,
+  Zap,
+  Activity,
+  TrendingUp
 } from 'lucide-react';
 import { useClientData } from '@/hooks/useClientData';
 import { useFileManagement } from '@/hooks/useFileManagement';
@@ -201,27 +209,28 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Mining Operations Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-client">
-            {client?.company_name || 'Your Company'}
+          <h1 className="text-3xl font-bold tracking-tight text-mining-primary font-mining-header">
+            <Mountain className="inline-block mr-3 h-8 w-8" />
+            {client?.company_name || 'Mining Operations'}
           </h1>
-          <p className="text-muted-foreground">
-            Manage your team and access your resources
+          <p className="text-muted-foreground font-mining-body">
+            Manage your mining crew and operational resources
           </p>
         </div>
         <div className="flex gap-2">
           <Button 
             onClick={() => setShowAddMemberModal(true)} 
-            className="bg-client hover:bg-client/90"
+            className="bg-mining-primary hover:bg-mining-primary/90 text-white"
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Team Member
+            <HardHat className="mr-2 h-4 w-4" />
+            Add Crew Member
           </Button>
           <Button variant="outline" onClick={() => onNavigate('/client/messages/new')}>
             <MessageSquare className="mr-2 h-4 w-4" />
-            Contact Admin
+            Contact HQ
           </Button>
           <Button variant="outline" size="sm" onClick={refreshData}>
             <RefreshCw className="h-4 w-4" />
@@ -229,61 +238,64 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
         </div>
       </div>
 
-      {/* Stats Overview */}
+      {/* Mining Operations Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-mining-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Members</CardTitle>
-            <Users className="h-4 w-4 text-client" />
+            <CardTitle className="text-sm font-medium font-mining-body">Mining Crew</CardTitle>
+            <HardHat className="h-4 w-4 text-mining-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.teamMemberCount}</div>
-            <p className="text-xs text-muted-foreground">Active users in your team</p>
+            <div className="text-2xl font-bold font-mining-mono">{stats.teamMemberCount}</div>
+            <p className="text-xs text-muted-foreground">Active miners on site</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-mining-secondary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assigned Files</CardTitle>
-            <FileText className="h-4 w-4 text-client" />
+            <CardTitle className="text-sm font-medium font-mining-body">Site Documents</CardTitle>
+            <Shield className="h-4 w-4 text-mining-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{files.length}</div>
-            <p className="text-xs text-muted-foreground">Files available to your team</p>
+            <div className="text-2xl font-bold font-mining-mono">{files.length}</div>
+            <p className="text-xs text-muted-foreground">Safety & operational docs</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-mining-accent">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">New Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-client" />
+            <CardTitle className="text-sm font-medium font-mining-body">Site Communications</CardTitle>
+            <Activity className="h-4 w-4 text-mining-accent" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.unreadMessagesCount}</div>
-            <p className="text-xs text-muted-foreground">Unread messages</p>
+            <div className="text-2xl font-bold font-mining-mono">{stats.unreadMessagesCount}</div>
+            <p className="text-xs text-muted-foreground">Unread site updates</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-green-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Storage Used</CardTitle>
-            <Download className="h-4 w-4 text-client" />
+            <CardTitle className="text-sm font-medium font-mining-body">Production Data</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.storageUsed}</div>
-            <p className="text-xs text-muted-foreground">of allocated storage</p>
+            <div className="text-2xl font-bold font-mining-mono">{stats.storageUsed}</div>
+            <p className="text-xs text-muted-foreground">of operational storage</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Files */}
+        {/* Recent Site Documents */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Files</CardTitle>
-            <CardDescription>
-              Files recently assigned to your team
+            <CardTitle className="font-mining-header flex items-center">
+              <Shield className="mr-2 h-5 w-5 text-mining-secondary" />
+              Recent Site Documents
+            </CardTitle>
+            <CardDescription className="font-mining-body">
+              Safety protocols and operational documents for your mining site
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -291,10 +303,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               {recentFiles.map((file) => (
                 <div key={file.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <FileText className="h-8 w-8 text-client" />
+                    <Shield className="h-8 w-8 text-mining-secondary" />
                     <div>
-                      <p className="text-sm font-medium">{file.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm font-medium font-mining-body">{file.name}</p>
+                      <p className="text-xs text-muted-foreground font-mining-mono">
                         {file.size} • {file.uploadedAt}
                       </p>
                     </div>
@@ -326,19 +338,23 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               ))}
             </div>
             <div className="mt-4 pt-4 border-t">
-              <Button variant="outline" className="w-full" onClick={() => onNavigate('/client/files')}>
-                View All Files
+              <Button variant="outline" className="w-full font-mining-body" onClick={() => onNavigate('/client/files')}>
+                <FileText className="mr-2 h-4 w-4" />
+                View All Site Documents
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Team Members */}
+        {/* Mining Crew */}
         <Card>
           <CardHeader>
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>
-              Manage your team members and their access
+            <CardTitle className="font-mining-header flex items-center">
+              <HardHat className="mr-2 h-5 w-5 text-mining-primary" />
+              Mining Crew
+            </CardTitle>
+            <CardDescription className="font-mining-body">
+              Manage your mining crew members and their site access
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -354,23 +370,25 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
                 ))
               ) : (
                 <div className="text-center py-6">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground">No team members yet</p>
+                  <HardHat className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground font-mining-body">No crew members assigned yet</p>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="mt-2"
+                    className="mt-2 font-mining-body"
                     onClick={() => setShowAddMemberModal(true)}
                   >
-                    Add First Member
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add First Miner
                   </Button>
                 </div>
               )}
             </div>
             {teamMembers.length > 0 && (
               <div className="mt-4 pt-4 border-t">
-                <Button variant="outline" className="w-full" onClick={() => onNavigate('/client/team')}>
-                  {teamMembers.length > 3 ? `View All ${teamMembers.length} Members` : 'Manage Team'}
+                <Button variant="outline" className="w-full font-mining-body" onClick={() => onNavigate('/client/team')}>
+                  <Users className="mr-2 h-4 w-4" />
+                  {teamMembers.length > 3 ? `View All ${teamMembers.length} Crew Members` : 'Manage Mining Crew'}
                 </Button>
               </div>
             )}

@@ -1,3 +1,7 @@
+// BACKUP OF ORIGINAL ADMIN DASHBOARD LAYOUT
+// Created before implementing Option 1 (removing empty sections)
+// This file preserves the current state for potential reversion
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +18,7 @@ import {
 } from 'lucide-react';
 
 /**
- * AdminDashboard Component
+ * AdminDashboard Component - BACKUP VERSION
  * 
  * Purpose: Main dashboard view for Admin users
  * Features:
@@ -36,7 +40,7 @@ interface AdminDashboardProps {
   onRoleSwitch?: (role: 'admin' | 'client' | 'user') => void;
 }
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRoleSwitch }) => {
+export const AdminDashboardBackup: React.FC<AdminDashboardProps> = ({ onNavigate, onRoleSwitch }) => {
   const [stats, setStats] = React.useState({
     totalClients: 0,
     totalUsers: 0,
@@ -109,19 +113,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
       {/* Header with quick actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mining Management Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-muted-foreground">
-            Oversee mining operations, manage companies and workers, monitor system activity
+            Manage your client portal system and monitor activity
           </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => onNavigate('/admin/clients/new')} className="bg-admin hover:bg-admin/90">
             <Plus className="mr-2 h-4 w-4" />
-            Add Mining Company
+            Add Client
           </Button>
           <Button variant="outline" onClick={() => onNavigate('/admin/files/upload')}>
             <FileText className="mr-2 h-4 w-4" />
-            Upload Document
+            Upload File
           </Button>
         </div>
       </div>
@@ -129,28 +133,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
       {/* Statistics Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Mining Companies"
+          title="Total Clients"
           value={isLoading ? "..." : stats.totalClients}
-          description="Active mining operations"
+          description="Active client companies"
           icon={<Building2 />}
           trend={isLoading ? "" : "+1 this month"}
         />
         <StatCard
-          title="Total Workers"
+          title="Total Users"
           value={isLoading ? "..." : stats.totalUsers}
-          description="Workers across all sites"
+          description="Users across all clients"
           icon={<Users />}
           trend={isLoading ? "" : "+3 this month"}
         />
         <StatCard
-          title="Documents Managed"
+          title="Files Managed"
           value={isLoading ? "..." : stats.totalFiles}
-          description="Total documents in system"
+          description="Total files in system"
           icon={<FileText />}
           trend="+28 this month"
         />
         <StatCard
-          title="Communications"
+          title="Messages Sent"
           value={stats.totalMessages}
           description="Messages this month"
           icon={<MessageSquare />}
@@ -158,14 +162,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
         />
       </div>
 
-      {/* Main content - Focused layout */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Activity - Full width on mobile, half on desktop */}
-        <Card>
+      {/* Main content grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Activity */}
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>
-              Latest actions across your mining management system
+              Latest actions across your client portal system
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -192,7 +196,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
           </CardContent>
         </Card>
 
-        {/* Quick Actions - Balanced with Recent Activity */}
+        {/* Quick Actions */}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
@@ -207,7 +211,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
               onClick={() => onNavigate('/admin/clients')}
             >
               <Building2 className="mr-2 h-4 w-4" />
-              Manage Mining Companies
+              Manage Clients
             </Button>
             <Button
               variant="outline"
@@ -215,7 +219,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
               onClick={() => onNavigate('/admin/users')}
             >
               <Users className="mr-2 h-4 w-4" />
-              Manage Workers
+              Manage Users
             </Button>
             <Button
               variant="outline"
@@ -223,7 +227,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
               onClick={() => onNavigate('/admin/files')}
             >
               <FileText className="mr-2 h-4 w-4" />
-              Document Management
+              File Management
             </Button>
             <Button
               variant="outline"
@@ -231,7 +235,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
               onClick={() => onNavigate('/admin/messages')}
             >
               <MessageSquare className="mr-2 h-4 w-4" />
-              Communication Center
+              Message Center
             </Button>
             <Button
               variant="outline"
@@ -245,11 +249,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
         </Card>
       </div>
 
-      {/* System Health Status - Compact */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+      {/* System Health Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle>System Status</CardTitle>
+          <CardDescription>
+            Current system health and performance metrics
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
               <div>
                 <p className="text-sm font-medium">Storage Usage</p>
                 <p className="text-2xl font-bold">2.4 GB</p>
@@ -259,25 +269,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
                 Healthy
               </Badge>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
               <div>
-                <p className="text-sm font-medium">Active Workers</p>
+                <p className="text-sm font-medium">Active Sessions</p>
                 <p className="text-2xl font-bold">23</p>
-                <p className="text-xs text-muted-foreground">currently online</p>
+                <p className="text-xs text-muted-foreground">users online</p>
               </div>
               <Badge variant="secondary" className="bg-success/10 text-success">
                 Normal
               </Badge>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
               <div>
                 <p className="text-sm font-medium">System Load</p>
                 <p className="text-2xl font-bold">Low</p>
@@ -287,9 +289,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
                 Optimal
               </Badge>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

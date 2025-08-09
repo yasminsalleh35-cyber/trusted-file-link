@@ -13,7 +13,14 @@ import {
   Bell,
   User,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  HardHat,
+  Shield,
+  Pickaxe,
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Zap
 } from 'lucide-react';
 import { useUserData } from '@/hooks/useUserData';
 import { FileCard } from '@/components/user/files/FileCard';
@@ -151,78 +158,78 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-user/10 to-user/5 rounded-lg p-6">
+      {/* Mining Worker Welcome Header */}
+      <div className="bg-steel-gradient rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="h-16 w-16 bg-user/20 rounded-full flex items-center justify-center">
-              <User className="h-8 w-8 text-user" />
+            <div className="h-16 w-16 bg-mining-primary/20 rounded-full flex items-center justify-center border-2 border-mining-accent">
+              <HardHat className="h-8 w-8 text-mining-accent" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-user">
-                Welcome, {profile?.full_name || 'User'}
+              <h1 className="text-2xl font-bold font-mining-header text-white">
+                Welcome, {profile?.full_name || 'Miner'}
               </h1>
-              <p className="text-muted-foreground">
-                {client?.company_name || 'Company'} • {profile?.email}
+              <p className="text-gray-200 font-mining-body">
+                {client?.company_name || 'Mining Site'} • Worker ID: {profile?.email?.split('@')[0]?.toUpperCase()}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Access your assigned files and stay updated with messages
+              <p className="text-sm text-gray-300 mt-1 font-mining-body">
+                Access safety documents and stay updated with site communications
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={refreshData}>
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="ghost" size="sm" onClick={refreshData} className="text-white hover:bg-white/20 border border-white/30">
+            <RefreshCw className="h-4 w-4 text-white" />
           </Button>
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Mining Worker Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-mining-secondary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assigned Files</CardTitle>
-            <FileText className="h-4 w-4 text-user" />
+            <CardTitle className="text-sm font-medium font-mining-body">Safety Documents</CardTitle>
+            <Shield className="h-4 w-4 text-mining-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.assignedFilesCount}</div>
-            <p className="text-xs text-muted-foreground">Files available to you</p>
+            <div className="text-2xl font-bold font-mining-mono">{stats.assignedFilesCount}</div>
+            <p className="text-xs text-muted-foreground">Safety protocols assigned</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-mining-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unread Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-user" />
+            <CardTitle className="text-sm font-medium font-mining-body">Site Updates</CardTitle>
+            <Activity className="h-4 w-4 text-mining-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.unreadMessagesCount}</div>
-            <p className="text-xs text-muted-foreground">New messages for you</p>
+            <div className="text-2xl font-bold font-mining-mono">{stats.unreadMessagesCount}</div>
+            <p className="text-xs text-muted-foreground">Unread site communications</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-md transition-shadow border-l-4 border-l-green-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Last Activity</CardTitle>
-            <Clock className="h-4 w-4 text-user" />
+            <CardTitle className="text-sm font-medium font-mining-body">Site Status</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.lastActivityTime.split(' ')[0]}</div>
-            <p className="text-xs text-muted-foreground">{stats.lastActivityTime.split(' ').slice(1).join(' ')}</p>
+            <div className="text-2xl font-bold font-mining-mono text-green-600">ACTIVE</div>
+            <p className="text-xs text-muted-foreground">Last check-in: {stats.lastActivityTime.split(' ')[0]} ago</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Files */}
+        {/* Safety Documents */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="mr-2 h-5 w-5 text-user" />
-              My Files
+            <CardTitle className="flex items-center font-mining-header">
+              <Shield className="mr-2 h-5 w-5 text-mining-secondary" />
+              Safety Documents
             </CardTitle>
-            <CardDescription>
-              Files assigned to you by admin or your client
+            <CardDescription className="font-mining-body">
+              Safety protocols and operational documents assigned to you
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -238,33 +245,34 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 ))
               ) : (
                 <div className="text-center py-6">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground">No files assigned yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Files assigned by your admin or client will appear here
+                  <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground font-mining-body">No safety documents assigned yet</p>
+                  <p className="text-xs text-muted-foreground mt-1 font-mining-body">
+                    Safety protocols and operational documents will appear here
                   </p>
                 </div>
               )}
             </div>
             {recentFiles.length > 0 && (
               <div className="mt-4 pt-4 border-t">
-                <Button variant="outline" className="w-full" onClick={() => onNavigate('/user/files')}>
-                  {recentFiles.length > 3 ? `View All ${recentFiles.length} Files` : 'View All My Files'}
+                <Button variant="outline" className="w-full font-mining-body" onClick={() => onNavigate('/user/files')}>
+                  <Shield className="mr-2 h-4 w-4" />
+                  {recentFiles.length > 3 ? `View All ${recentFiles.length} Safety Documents` : 'View All Safety Documents'}
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Recent Messages */}
+        {/* Site Communications */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <MessageSquare className="mr-2 h-5 w-5 text-user" />
-              Messages
+            <CardTitle className="flex items-center font-mining-header">
+              <Activity className="mr-2 h-5 w-5 text-mining-primary" />
+              Site Communications
             </CardTitle>
-            <CardDescription>
-              Communications from admin and your client
+            <CardDescription className="font-mining-body">
+              Updates and communications from site management and HQ
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -279,10 +287,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 ))
               ) : (
                 <div className="text-center py-6">
-                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground">No messages yet</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Messages from your admin or client will appear here
+                  <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground font-mining-body">No site communications yet</p>
+                  <p className="text-xs text-muted-foreground mt-1 font-mining-body">
+                    Updates from site management and HQ will appear here
                   </p>
                 </div>
               )}

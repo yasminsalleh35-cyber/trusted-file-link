@@ -103,22 +103,22 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
   // Role configuration
   const roleConfig = {
     admin: {
-      title: 'Admin Registration',
-      description: 'Create a new system administrator account',
+      title: 'Mining HQ Registration',
+      description: 'Create a new mining headquarters administrator account',
       icon: <Shield className="h-6 w-6 text-admin" />,
       buttonClass: 'bg-admin hover:bg-admin/90',
       accentColor: 'border-l-4 border-l-admin'
     },
     client: {
-      title: 'Client Registration',
-      description: 'Register your company and create a client account',
+      title: 'Mining Company Registration',
+      description: 'Register your mining company and create a site manager account',
       icon: <Building2 className="h-6 w-6 text-client" />,
       buttonClass: 'bg-client hover:bg-client/90',
       accentColor: 'border-l-4 border-l-client'
     },
     user: {
-      title: 'User Registration',
-      description: 'Join an existing client organization',
+      title: 'Miner Registration',
+      description: 'Join an existing mining company as a worker',
       icon: <User className="h-6 w-6 text-user" />,
       buttonClass: 'bg-user hover:bg-user/90',
       accentColor: 'border-l-4 border-l-user'

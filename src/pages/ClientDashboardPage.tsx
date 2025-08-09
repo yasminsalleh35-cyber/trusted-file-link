@@ -8,7 +8,12 @@ import {
   FileText, 
   MessageSquare, 
   Settings,
-  BarChart3
+  BarChart3,
+  HardHat,
+  Pickaxe,
+  Mountain,
+  Truck,
+  Shield
 } from 'lucide-react';
 
 /**
@@ -31,30 +36,30 @@ const ClientDashboardPage: React.FC = () => {
     navigate(route);
   };
 
-  // Client navigation items
+  // Mining Company navigation items
   const navigationItems = [
     { 
-      name: 'Dashboard', 
+      name: 'Operations Dashboard', 
       href: '/client/dashboard', 
-      icon: <BarChart3 className="h-5 w-5" />
+      icon: <Mountain className="h-5 w-5" />
     },
     { 
-      name: 'My Team', 
+      name: 'Mining Crew', 
       href: '/client/team', 
-      icon: <Users className="h-5 w-5" />
+      icon: <HardHat className="h-5 w-5" />
     },
     { 
-      name: 'Files', 
+      name: 'Site Documents', 
       href: '/client/files', 
       icon: <FileText className="h-5 w-5" />
     },
     { 
-      name: 'Messages', 
+      name: 'Communications', 
       href: '/client/messages', 
       icon: <MessageSquare className="h-5 w-5" />
     },
     { 
-      name: 'Settings', 
+      name: 'Site Settings', 
       href: '/client/settings', 
       icon: <Settings className="h-5 w-5" />
     },

@@ -7,7 +7,12 @@ import {
   FileText, 
   MessageSquare, 
   Settings,
-  BarChart3
+  BarChart3,
+  HardHat,
+  Pickaxe,
+  Shield,
+  ClipboardList,
+  User
 } from 'lucide-react';
 
 /**
@@ -30,27 +35,27 @@ const UserDashboardPage: React.FC = () => {
     navigate(route);
   };
 
-  // User navigation items
+  // Mining Worker navigation items
   const navigationItems = [
     { 
-      name: 'Dashboard', 
+      name: 'Worker Dashboard', 
       href: '/user/dashboard', 
-      icon: <BarChart3 className="h-5 w-5" />
+      icon: <HardHat className="h-5 w-5" />
     },
     { 
-      name: 'My Files', 
+      name: 'Safety Documents', 
       href: '/user/files', 
-      icon: <FileText className="h-5 w-5" />
+      icon: <Shield className="h-5 w-5" />
     },
     { 
-      name: 'Messages', 
+      name: 'Site Communications', 
       href: '/user/messages', 
       icon: <MessageSquare className="h-5 w-5" />
     },
     { 
-      name: 'Profile', 
+      name: 'Worker Profile', 
       href: '/user/profile', 
-      icon: <Settings className="h-5 w-5" />
+      icon: <User className="h-5 w-5" />
     },
   ];
 

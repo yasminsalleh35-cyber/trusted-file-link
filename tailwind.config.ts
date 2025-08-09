@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'mining-header': ['Roboto Slab', 'serif'],
+				'mining-body': ['Inter', 'sans-serif'],
+				'mining-mono': ['JetBrains Mono', 'monospace'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -65,6 +70,10 @@ export default {
 				admin: 'hsl(var(--admin-primary))',
 				client: 'hsl(var(--client-primary))',
 				user: 'hsl(var(--user-primary))',
+				// Mining-themed colors
+				'mining-primary': 'hsl(25, 95%, 53%)', // Mining orange
+				'mining-secondary': 'hsl(210, 29%, 24%)', // Steel blue
+				'mining-accent': 'hsl(45, 100%, 51%)', // Gold
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
