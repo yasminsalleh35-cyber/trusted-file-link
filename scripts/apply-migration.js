@@ -1,12 +1,13 @@
-const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
-const path = require('path');
+import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Read environment variables
-require('dotenv').config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = "https://snplwgyewoljrprqpdrm.supabase.co";
+const supabaseServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNucGx3Z3lld29sanJwcnFwZHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjk0MDEwMSwiZXhwIjoyMDY4NTE2MTAxfQ.wQFJkVJBWJmdeVjbZVgzOUhkqhCOBJOhOdOqoaOqoaE";
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing Supabase credentials');
@@ -17,10 +18,10 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function applyMigration() {
   try {
-    console.log('🚀 Applying file system migration...');
+    console.log('🚀 Applying files table column fix migration...');
     
     // Read the migration file
-    const migrationPath = path.join(__dirname, '../supabase/migrations/20240101000007_create_complete_file_system.sql');
+    const migrationPath = path.join(__dirname, '../supabase/migrations/20250201000008_fix_files_table_columns.sql');
     const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
     
     // Split the migration into individual statements

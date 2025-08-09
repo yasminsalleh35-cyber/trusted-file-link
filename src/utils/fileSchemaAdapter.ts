@@ -46,14 +46,14 @@ export interface AppFileInsert {
 export function mapDatabaseFileToApp(dbFile: DatabaseFileRow): AppFile {
   return {
     id: dbFile.id,
-    filename: dbFile.name,
-    original_filename: dbFile.original_name,
-    storage_path: dbFile.file_path,
+    filename: dbFile.filename,
+    original_filename: dbFile.original_filename,
+    storage_path: dbFile.storage_path,
     file_size: dbFile.file_size,
-    file_type: dbFile.mime_type,
+    file_type: dbFile.file_type,
     uploaded_by: dbFile.uploaded_by,
     description: dbFile.description,
-    created_at: dbFile.uploaded_at,
+    created_at: dbFile.created_at,
   };
 }
 
@@ -62,11 +62,11 @@ export function mapDatabaseFileToApp(dbFile: DatabaseFileRow): AppFile {
  */
 export function mapAppFileToDatabase(appFile: AppFileInsert): DatabaseFileInsert {
   return {
-    name: appFile.filename,
-    original_name: appFile.original_filename,
-    file_path: appFile.storage_path,
+    filename: appFile.filename,
+    original_filename: appFile.original_filename,
+    storage_path: appFile.storage_path,
     file_size: appFile.file_size,
-    mime_type: appFile.file_type,
+    file_type: appFile.file_type,
     uploaded_by: appFile.uploaded_by,
     description: appFile.description,
   };
@@ -104,7 +104,7 @@ export function safeFileAccess(file: any): AppFile {
   }
 
   // If it's a database file, convert it
-  if (file && file.name && file.original_name) {
+  if (file && file.filename && file.original_filename) {
     return mapDatabaseFileToApp(file as DatabaseFileRow);
   }
 

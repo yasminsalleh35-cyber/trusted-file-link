@@ -66,7 +66,6 @@ export type Database = {
         Row: {
           assigned_by: string
           assigned_to_client: string | null
-          assigned_to_user: string | null
           created_at: string | null
           file_id: string
           id: string
@@ -74,7 +73,6 @@ export type Database = {
         Insert: {
           assigned_by: string
           assigned_to_client?: string | null
-          assigned_to_user?: string | null
           created_at?: string | null
           file_id: string
           id?: string
@@ -82,7 +80,6 @@ export type Database = {
         Update: {
           assigned_by?: string
           assigned_to_client?: string | null
-          assigned_to_user?: string | null
           created_at?: string | null
           file_id?: string
           id?: string
@@ -141,36 +138,36 @@ export type Database = {
       }
       files: {
         Row: {
-          uploaded_at: string | null
+          created_at: string | null
           description: string | null
           file_size: number
-          mime_type: string
-          name: string
+          file_type: string
+          filename: string
           id: string
-          original_name: string
-          file_path: string
+          original_filename: string
+          storage_path: string
           uploaded_by: string
         }
         Insert: {
-          uploaded_at?: string | null
+          created_at?: string | null
           description?: string | null
           file_size: number
-          mime_type: string
-          name: string
+          file_type: string
+          filename: string
           id?: string
-          original_name: string
-          file_path: string
+          original_filename: string
+          storage_path: string
           uploaded_by: string
         }
         Update: {
-          uploaded_at?: string | null
+          created_at?: string | null
           description?: string | null
           file_size?: number
-          mime_type?: string
-          name?: string
+          file_type?: string
+          filename?: string
           id?: string
-          original_name?: string
-          file_path?: string
+          original_filename?: string
+          storage_path?: string
           uploaded_by?: string
         }
         Relationships: [

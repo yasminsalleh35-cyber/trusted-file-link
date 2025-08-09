@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Mail, Lock, User, Building2, Shield, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * RegistrationForm Component
@@ -53,12 +54,51 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
   const [success, setSuccess] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
-  // Available clients for user registration
-  const [availableClients] = useState([
-    { id: 'bacb2c3b-7714-494f-ad13-158d6a008b09', name: 'ACME Corporation' },
-    { id: 'demo-client-2', name: 'TechStart Inc.' },
-    { id: 'demo-client-3', name: 'Global Solutions Ltd.' }
-  ]);
+  // Available clients for user registration (fetched from database)
+  const [availableClients, setAvailableClients] = useState<Array<{id: string, company_name: string}>>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+
+  // Fetch available clients from database
+  useEffect(() => {
+    const fetchClients = async () => {
+      if (allowedRoles.includes('user')) {
+        setLoadingClients(true);
+        try {
+          const { data: clients, error } = await supabase
+            .from('clients')
+            .select('id, company_name')
+            .order('company_name');
+
+          if (error) {
+            console.error('Error fetching clients:', error);
+            setError('Failed to load available companies');
+          } else if (clients) {
+            // Remove duplicates based on company_name (case-insensitive)
+            const uniqueClients = clients.reduce((acc: Array<{id: string, company_name: string}>, current) => {
+              const existingClient = acc.find(client => 
+                client.company_name.toLowerCase() === current.company_name.toLowerCase()
+              );
+              
+              if (!existingClient) {
+                acc.push(current);
+              }
+              
+              return acc;
+            }, []);
+
+            setAvailableClients(uniqueClients);
+          }
+        } catch (err) {
+          console.error('Exception fetching clients:', err);
+          setError('Failed to load available companies');
+        } finally {
+          setLoadingClients(false);
+        }
+      }
+    };
+
+    fetchClients();
+  }, [allowedRoles]);
 
   // Role configuration
   const roleConfig = {
@@ -89,6 +129,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
 
   // Handle form input changes
   const handleInputChange = (field: string, value: string) => {
+    // Prevent setting invalid client IDs
+    if (field === 'clientId' && (value === 'loading' || value === 'no-companies')) {
+      return; // Don't update the form data with these values
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     setError(''); // Clear error when user types
   };
@@ -119,7 +164,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
       throw new Error('Company name is required for client registration');
     }
 
-    if (formData.role === 'user' && !formData.clientId) {
+    if (formData.role === 'user' && (!formData.clientId || formData.clientId === 'loading' || formData.clientId === 'no-companies')) {
       throw new Error('Please select which company you want to join');
     }
 
@@ -308,18 +353,46 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
                 <Select 
                   value={formData.clientId} 
                   onValueChange={(value) => handleInputChange('clientId', value)}
+                  disabled={isLoading || loadingClients}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Choose your company" />
+                    <SelectValue placeholder={
+                      loadingClients 
+                        ? "Loading companies..." 
+                        : availableClients.length === 0 
+                          ? "No companies available" 
+                          : "Choose your company"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableClients.map((client) => (
-                      <SelectItem key={client.id} value={client.id}>
-                        {client.name}
+                    {loadingClients ? (
+                      <SelectItem value="loading" disabled>
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Loading companies...</span>
+                        </div>
                       </SelectItem>
-                    ))}
+                    ) : availableClients.length === 0 ? (
+                      <SelectItem value="no-companies" disabled>
+                        No companies available
+                      </SelectItem>
+                    ) : (
+                      availableClients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex items-center space-x-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span>{client.company_name}</span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {availableClients.length === 0 && !loadingClients && (
+                  <p className="text-sm text-muted-foreground">
+                    No companies are currently available for registration. Please contact an administrator.
+                  </p>
+                )}
               </div>
             )}
 
