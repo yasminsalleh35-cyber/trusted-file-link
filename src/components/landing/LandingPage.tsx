@@ -9,24 +9,54 @@ import {
   BarChart3, 
   Smartphone,
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  Mountain,
+  Pickaxe,
+  Settings,
+  Layers,
+  HardHat
 } from 'lucide-react';
 
 /**
  * LandingPage Component
  * 
- * Purpose: Modern landing page for the Financial Management Portal
+ * Purpose: Modern landing page for the Mining Management HUB
  * Features:
  * - Hero section with animated background
- * - Feature highlights
- * - WhatsApp integration showcase
- * - Clean, modern design inspired by Eduardo Bibiano's portfolio
+ * - Mining operations feature highlights
+ * - Document management and security showcase
+ * - Clean, modern design with mining industry theming
  * - Call-to-action button to enter the portal
  */
 
 interface LandingPageProps {
   onEnterPortal: () => void;
 }
+
+// Custom Mining Management HUB Logo Component
+const MiningLogo: React.FC<{ className?: string }> = ({ className = "" }) => {
+  return (
+    <div className={`relative ${className}`}>
+      {/* Main logo container with gradient background */}
+      <div className="w-10 h-10 bg-gradient-to-br from-amber-500 via-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg relative overflow-hidden">
+        {/* Background pattern for depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-transparent"></div>
+        
+        {/* Mountain silhouette in background */}
+        <Mountain className="absolute h-6 w-6 text-white/20 transform rotate-12" />
+        
+        {/* Main pickaxe icon */}
+        <Pickaxe className="h-5 w-5 text-white relative z-10 transform -rotate-12" />
+        
+        {/* Small gear accent */}
+        <Settings className="absolute bottom-0 right-0 h-3 w-3 text-white/60 transform rotate-45" />
+        
+        {/* Shine effect */}
+        <div className="absolute top-1 left-1 w-2 h-2 bg-white/30 rounded-full blur-sm"></div>
+      </div>
+    </div>
+  );
+};
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
   return (
@@ -41,11 +71,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
       {/* Navigation */}
       <nav className="relative z-10 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-lg flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-white" />
+          <div className="flex items-center space-x-3">
+            <MiningLogo />
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-foreground leading-tight">Mining Management</span>
+              <span className="text-sm font-semibold text-amber-600 leading-tight tracking-wider">HUB</span>
             </div>
-            <span className="text-xl font-bold text-foreground">FinanceHub</span>
           </div>
           <Button 
             variant="outline" 
@@ -63,14 +94,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
           {/* Main Heading */}
           <div className="animate-fade-in">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6">
-              Financial Management
-              <span className="bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-                {" "}Simplified
+              Mining Operations
+              <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
+                {" "}Streamlined
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Stay connected with real-time market updates and personalized financial insights 
-              delivered directly through WhatsApp
+              Comprehensive mining management platform for operations, safety, and administrative oversight 
+              with real-time monitoring and secure file sharing
             </p>
           </div>
 
@@ -91,25 +122,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
             <div className="relative max-w-4xl mx-auto">
               <div className="bg-gradient-to-r from-card to-card/50 rounded-2xl p-8 shadow-2xl border backdrop-blur-sm">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* WhatsApp Integration */}
-                  <Card className="p-6 hover-scale bg-gradient-to-br from-green-50 to-green-100/50 border-green-200">
-                    <Smartphone className="h-8 w-8 text-green-600 mb-4" />
-                    <h3 className="font-semibold text-foreground mb-2">WhatsApp Updates</h3>
-                    <p className="text-sm text-muted-foreground">Real-time market news and insights</p>
+                  {/* Operations Management */}
+                  <Card className="p-6 hover-scale bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200">
+                    <HardHat className="h-8 w-8 text-amber-600 mb-4" />
+                    <h3 className="font-semibold text-foreground mb-2">Operations Control</h3>
+                    <p className="text-sm text-muted-foreground">Real-time mining operations monitoring</p>
                   </Card>
 
                   {/* Analytics */}
                   <Card className="p-6 hover-scale bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200">
                     <BarChart3 className="h-8 w-8 text-blue-600 mb-4" />
-                    <h3 className="font-semibold text-foreground mb-2">Smart Analytics</h3>
-                    <p className="text-sm text-muted-foreground">Comprehensive financial tracking</p>
+                    <h3 className="font-semibold text-foreground mb-2">Production Analytics</h3>
+                    <p className="text-sm text-muted-foreground">Comprehensive mining data tracking</p>
                   </Card>
 
                   {/* Security */}
-                  <Card className="p-6 hover-scale bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200">
-                    <Shield className="h-8 w-8 text-purple-600 mb-4" />
-                    <h3 className="font-semibold text-foreground mb-2">Secure Platform</h3>
-                    <p className="text-sm text-muted-foreground">Enterprise-grade security</p>
+                  <Card className="p-6 hover-scale bg-gradient-to-br from-red-50 to-red-100/50 border-red-200">
+                    <Shield className="h-8 w-8 text-red-600 mb-4" />
+                    <h3 className="font-semibold text-foreground mb-2">Safety & Security</h3>
+                    <p className="text-sm text-muted-foreground">Mining safety protocols & data protection</p>
                   </Card>
                 </div>
               </div>
@@ -123,36 +154,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Why Choose FinanceHub?
+              Why Choose Mining Management HUB?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our platform combines modern technology with personalized communication 
-              to keep you ahead in the financial market
+              Our comprehensive platform integrates mining operations, safety management, 
+              and administrative oversight to optimize your mining operations
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Feature 1 */}
             <Card className="p-6 hover-scale bg-card/50 backdrop-blur-sm border-muted">
-              <MessageCircle className="h-10 w-10 text-primary mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">Direct Communication</h3>
+              <Layers className="h-10 w-10 text-amber-600 mb-4" />
+              <h3 className="font-semibold text-foreground mb-2">Document Management</h3>
               <p className="text-sm text-muted-foreground">
-                Receive updates and insights directly on WhatsApp
+                Secure file sharing and document control for mining operations
               </p>
-              <div className="mt-4 flex items-center text-xs text-primary">
+              <div className="mt-4 flex items-center text-xs text-amber-600">
                 <CheckCircle className="h-4 w-4 mr-1" />
-                Real-time delivery
+                Trusted file links
               </div>
             </Card>
 
             {/* Feature 2 */}
             <Card className="p-6 hover-scale bg-card/50 backdrop-blur-sm border-muted">
-              <Users className="h-10 w-10 text-accent mb-4" />
+              <Users className="h-10 w-10 text-blue-600 mb-4" />
               <h3 className="font-semibold text-foreground mb-2">Multi-Role Access</h3>
               <p className="text-sm text-muted-foreground">
-                Admin, client, and user portals with tailored experiences
+                Admin, mining company, and worker portals with specialized access
               </p>
-              <div className="mt-4 flex items-center text-xs text-accent">
+              <div className="mt-4 flex items-center text-xs text-blue-600">
                 <CheckCircle className="h-4 w-4 mr-1" />
                 Role-based permissions
               </div>
@@ -160,27 +191,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
 
             {/* Feature 3 */}
             <Card className="p-6 hover-scale bg-card/50 backdrop-blur-sm border-muted">
-              <TrendingUp className="h-10 w-10 text-secondary mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">Market Intelligence</h3>
+              <Mountain className="h-10 w-10 text-orange-600 mb-4" />
+              <h3 className="font-semibold text-foreground mb-2">Operations Oversight</h3>
               <p className="text-sm text-muted-foreground">
-                Stay updated with the latest market trends and analysis
+                Comprehensive monitoring and management of mining activities
               </p>
-              <div className="mt-4 flex items-center text-xs text-secondary">
+              <div className="mt-4 flex items-center text-xs text-orange-600">
                 <CheckCircle className="h-4 w-4 mr-1" />
-                AI-powered insights
+                Real-time monitoring
               </div>
             </Card>
 
             {/* Feature 4 */}
             <Card className="p-6 hover-scale bg-card/50 backdrop-blur-sm border-muted">
-              <Shield className="h-10 w-10 text-green-600 mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">Secure & Reliable</h3>
+              <Shield className="h-10 w-10 text-red-600 mb-4" />
+              <h3 className="font-semibold text-foreground mb-2">Safety & Security</h3>
               <p className="text-sm text-muted-foreground">
-                Bank-level security with 99.9% uptime guarantee
+                Mining-grade security protocols with comprehensive safety management
               </p>
-              <div className="mt-4 flex items-center text-xs text-green-600">
+              <div className="mt-4 flex items-center text-xs text-red-600">
                 <CheckCircle className="h-4 w-4 mr-1" />
-                End-to-end encryption
+                Industry compliance
               </div>
             </Card>
           </div>
@@ -191,10 +222,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
       <section className="relative z-10 px-6 py-20">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-            Ready to Transform Your Financial Management?
+            Ready to Optimize Your Mining Operations?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join thousands of users who trust FinanceHub for their financial communication needs
+            Join mining companies worldwide who trust Mining Management HUB for secure operations management
           </p>
           <Button 
             size="lg" 
@@ -210,7 +241,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
       {/* Footer */}
       <footer className="relative z-10 px-6 py-8 border-t border-border">
         <div className="max-w-7xl mx-auto text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 FinanceHub. All rights reserved. Built with ❤️ for modern financial management.</p>
+          <p>&copy; 2024 Mining Management HUB. All rights reserved. Built with ⛏️ for modern mining operations.</p>
         </div>
       </footer>
     </div>
