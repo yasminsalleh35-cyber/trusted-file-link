@@ -11,9 +11,13 @@ import LoginPage from "./pages/LoginPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminClientsPage from "./pages/admin/AdminClientsPage";
 import AdminFileManagementPage from "./pages/AdminFileManagementPage";
+import AdminMessagesPage from "./pages/admin/AdminMessagesPage";
+import SystemTestPage from "./pages/admin/SystemTestPage";
 import ClientDashboardPage from "./pages/ClientDashboardPage";
+import ClientMessagesPage from "./pages/client/ClientMessagesPage";
 import UserDashboardPage from "./pages/UserDashboardPage";
 import UserFilesPage from "./pages/UserFilesPage";
+import UserMessagesPage from "./pages/user/UserMessagesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -95,6 +99,22 @@ const App = () => (
             } 
           />
           <Route 
+            path="/admin/messages" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminMessagesPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/system-test" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <SystemTestPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/admin/*" 
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -109,6 +129,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['client']}>
                 <ClientDashboardPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/client/messages" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <ClientMessagesPage />
               </ProtectedRoute>
             } 
           />
@@ -135,6 +163,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <UserFilesPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/user/messages" 
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <UserMessagesPage />
               </ProtectedRoute>
             } 
           />

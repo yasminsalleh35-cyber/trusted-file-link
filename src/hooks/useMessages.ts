@@ -1,0 +1,402 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import type { Database } from '@/integrations/supabase/types';
+
+/**
+ * useMessages Hook
+ * 
+ * Purpose: Comprehensive message management for all user roles
+ * Features:
+ * - Fetch messages with real-time updates
+ * - Send messages between users
+ * - Mark messages as read
+ * - Delete messages
+ * - Filter and search messages
+ * - Real-time subscriptions
+ */
+
+type Message = Database['public']['Tables']['messages']['Row'];
+type MessageInsert = Database['public']['Tables']['messages']['Insert'];
+type MessageType = Database['public']['Enums']['message_type'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
+export interface EnhancedMessage extends Message {
+  sender_name: string;
+  sender_role: string;
+  recipient_name: string;
+  recipient_role: string;
+  is_unread: boolean;
+  formatted_time: string;
+}
+
+export interface MessageStats {
+  totalMessages: number;
+  unreadMessages: number;
+  sentMessages: number;
+  receivedMessages: number;
+}
+
+export interface MessageFilters {
+  messageType?: MessageType;
+  isUnread?: boolean;
+  senderId?: string;
+  recipientId?: string;
+  searchTerm?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface SendMessageData {
+  recipientId: string;
+  subject?: string;
+  content: string;
+  messageType: MessageType;
+}
+
+export const useMessages = () => {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<EnhancedMessage[]>([]);
+  const [stats, setStats] = useState<MessageStats>({
+    totalMessages: 0,
+    unreadMessages: 0,
+    sentMessages: 0,
+    receivedMessages: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<MessageFilters>({});
+  
+  // Use ref to store latest fetchMessages function for real-time subscriptions
+  const fetchMessagesRef = useRef<() => void>();
+
+  // Helper function to format relative time
+  const formatRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays === 1) return '1 day ago';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} week${Math.floor(diffInDays / 7) > 1 ? 's' : ''} ago`;
+    return `${Math.floor(diffInDays / 30)} month${Math.floor(diffInDays / 30) > 1 ? 's' : ''} ago`;
+  };
+
+  // Fetch messages with enhanced data
+  const fetchMessages = useCallback(async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Build query based on filters
+      let query = supabase
+        .from('messages')
+        .select(`
+          *,
+          sender:sender_id(id, full_name, role),
+          recipient:recipient_id(id, full_name, role)
+        `)
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`)
+        .order('created_at', { ascending: false });
+
+      // Apply filters
+      if (filters.messageType) {
+        query = query.eq('message_type', filters.messageType);
+      }
+      if (filters.isUnread !== undefined) {
+        if (filters.isUnread) {
+          query = query.is('read_at', null);
+        } else {
+          query = query.not('read_at', 'is', null);
+        }
+      }
+      if (filters.senderId) {
+        query = query.eq('sender_id', filters.senderId);
+      }
+      if (filters.recipientId) {
+        query = query.eq('recipient_id', filters.recipientId);
+      }
+      if (filters.searchTerm) {
+        query = query.or(`subject.ilike.%${filters.searchTerm}%,content.ilike.%${filters.searchTerm}%`);
+      }
+      if (filters.dateFrom) {
+        query = query.gte('created_at', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        query = query.lte('created_at', filters.dateTo);
+      }
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) throw fetchError;
+
+      // Transform data to enhanced messages
+      const enhancedMessages: EnhancedMessage[] = (data || []).map(msg => ({
+        ...msg,
+        sender_name: (msg.sender as any)?.full_name || 'Unknown User',
+        sender_role: (msg.sender as any)?.role || 'unknown',
+        recipient_name: (msg.recipient as any)?.full_name || 'Unknown User',
+        recipient_role: (msg.recipient as any)?.role || 'unknown',
+        is_unread: !msg.read_at && msg.recipient_id === user.id,
+        formatted_time: formatRelativeTime(msg.created_at || '')
+      }));
+
+      setMessages(enhancedMessages);
+
+      // Calculate stats
+      const totalMessages = enhancedMessages.length;
+      const unreadMessages = enhancedMessages.filter(m => m.is_unread).length;
+      const sentMessages = enhancedMessages.filter(m => m.sender_id === user.id).length;
+      const receivedMessages = enhancedMessages.filter(m => m.recipient_id === user.id).length;
+
+      setStats({
+        totalMessages,
+        unreadMessages,
+        sentMessages,
+        receivedMessages
+      });
+
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch messages');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, filters]);
+
+  // Update ref with latest fetchMessages
+  fetchMessagesRef.current = fetchMessages;
+
+  // Send a new message
+  const sendMessage = async (messageData: SendMessageData): Promise<{ success: boolean; error?: string; messageId?: string }> => {
+    if (!user) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      const messageInsert: MessageInsert = {
+        sender_id: user.id,
+        recipient_id: messageData.recipientId,
+        subject: messageData.subject || null,
+        content: messageData.content,
+        message_type: messageData.messageType,
+        created_at: new Date().toISOString()
+      };
+
+      const { data, error: sendError } = await supabase
+        .from('messages')
+        .insert(messageInsert)
+        .select()
+        .single();
+
+      if (sendError) throw sendError;
+
+      // Refresh messages to include the new one
+      await fetchMessages();
+
+      return { success: true, messageId: data.id };
+    } catch (error) {
+      console.error('Error sending message:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send message' 
+      };
+    }
+  };
+
+  // Mark message as read
+  const markAsRead = async (messageId: string): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      const { error: updateError } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', messageId)
+        .eq('recipient_id', user.id); // Only allow marking own messages as read
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, read_at: new Date().toISOString(), is_unread: false }
+          : msg
+      ));
+
+      // Update stats
+      setStats(prev => ({
+        ...prev,
+        unreadMessages: Math.max(0, prev.unreadMessages - 1)
+      }));
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to mark message as read' 
+      };
+    }
+  };
+
+  // Mark multiple messages as read
+  const markMultipleAsRead = async (messageIds: string[]): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      const { error: updateError } = await supabase
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .in('id', messageIds)
+        .eq('recipient_id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Refresh messages
+      await fetchMessages();
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to mark messages as read' 
+      };
+    }
+  };
+
+  // Delete message
+  const deleteMessage = async (messageId: string): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      // Only allow deleting messages where user is sender or recipient
+      const { error: deleteError } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId)
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`);
+
+      if (deleteError) throw deleteError;
+
+      // Remove from local state
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+
+      // Update stats
+      setStats(prev => {
+        const deletedMessage = messages.find(m => m.id === messageId);
+        if (!deletedMessage) return prev;
+
+        return {
+          totalMessages: prev.totalMessages - 1,
+          unreadMessages: deletedMessage.is_unread ? prev.unreadMessages - 1 : prev.unreadMessages,
+          sentMessages: deletedMessage.sender_id === user.id ? prev.sentMessages - 1 : prev.sentMessages,
+          receivedMessages: deletedMessage.recipient_id === user.id ? prev.receivedMessages - 1 : prev.receivedMessages
+        };
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to delete message' 
+      };
+    }
+  };
+
+  // Get message by ID
+  const getMessageById = (messageId: string): EnhancedMessage | undefined => {
+    return messages.find(msg => msg.id === messageId);
+  };
+
+  // Update filters
+  const updateFilters = (newFilters: Partial<MessageFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
+  // Clear filters
+  const clearFilters = () => {
+    setFilters({});
+  };
+
+  // Refresh messages
+  const refreshMessages = () => {
+    fetchMessages();
+  };
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!user) return;
+
+    // Initial fetch
+    fetchMessages();
+
+    const subscription = supabase
+      .channel('messages')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `or(sender_id.eq.${user.id},recipient_id.eq.${user.id})`
+        },
+        () => {
+          // Refresh messages when changes occur
+          fetchMessagesRef.current?.();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user]);
+
+  // Separate effect for filter changes
+  useEffect(() => {
+    if (user) {
+      fetchMessages();
+    }
+  }, [filters]);
+
+  return {
+    // Data
+    messages,
+    stats,
+    filters,
+    isLoading,
+    error,
+    
+    // Actions
+    sendMessage,
+    markAsRead,
+    markMultipleAsRead,
+    deleteMessage,
+    refreshMessages,
+    
+    // Utilities
+    getMessageById,
+    updateFilters,
+    clearFilters
+  };
+};

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useFileManagement } from '@/hooks/useFileManagement';
+import { useMessages } from '@/hooks/useMessages';
 import type { Database } from '@/integrations/supabase/types';
 
 /**
@@ -62,6 +63,7 @@ export interface UserData {
 export const useUserData = () => {
   const { user } = useAuth();
   const { files: managedFiles, downloadFile: downloadManagedFile, previewFile: previewManagedFile } = useFileManagement();
+  const { messages, stats: messageStats, markAsRead } = useMessages();
   
   // Helper functions
   const formatFileSize = (bytes: number): string => {
@@ -149,40 +151,21 @@ export const useUserData = () => {
         assignedByRole: file.uploaded_by_role || 'unknown'
       }));
 
-      const mockMessages: UserMessage[] = [
-        {
-          id: '1',
-          from: 'System Admin',
-          fromRole: 'admin',
-          subject: 'New training materials available',
-          content: 'Please review the new training materials that have been assigned to you.',
-          time: '2 hours ago',
-          unread: true
-        },
-        {
-          id: '2',
-          from: clientData?.company_name || 'Client Admin',
-          fromRole: 'client',
-          subject: 'Project update and next steps',
-          content: 'Here are the latest updates on your current project assignments.',
-          time: '1 day ago',
-          unread: true
-        },
-        {
-          id: '3',
-          from: 'System Admin',
-          fromRole: 'admin',
-          subject: 'System maintenance notice',
-          content: 'Scheduled maintenance will occur this weekend.',
-          time: '3 days ago',
-          unread: false
-        }
-      ];
+      // Transform real messages to UserMessage format
+      const recentMessages: UserMessage[] = messages.slice(0, 5).map(msg => ({
+        id: msg.id,
+        from: msg.sender_name,
+        fromRole: msg.sender_role,
+        subject: msg.subject || 'No subject',
+        content: msg.content,
+        time: msg.formatted_time,
+        unread: msg.is_unread
+      }));
 
       // Calculate stats
       const stats: UserStats = {
         assignedFilesCount: userFiles.length,
-        unreadMessagesCount: mockMessages.filter(m => m.unread).length,
+        unreadMessagesCount: messageStats.unreadMessages,
         lastActivityTime: '2 hours ago' // TODO: Implement real activity tracking
       };
 
@@ -191,7 +174,7 @@ export const useUserData = () => {
         client: clientData,
         stats,
         recentFiles: userFiles,
-        recentMessages: mockMessages,
+        recentMessages,
         isLoading: false,
         error: null,
         managedFiles,
@@ -209,25 +192,15 @@ export const useUserData = () => {
     }
   };
 
-  // Mark message as read
+  // Mark message as read (now uses real messaging system)
   const markMessageAsRead = async (messageId: string) => {
     try {
-      // TODO: Implement when messages table is available
-      console.log('Marking message as read:', messageId);
-      
-      // Update local state for now
-      setUserData(prev => ({
-        ...prev,
-        recentMessages: prev.recentMessages.map(msg =>
-          msg.id === messageId ? { ...msg, unread: false } : msg
-        ),
-        stats: {
-          ...prev.stats,
-          unreadMessagesCount: Math.max(0, prev.stats.unreadMessagesCount - 1)
-        }
-      }));
-
-      return { success: true };
+      const result = await markAsRead(messageId);
+      if (result.success) {
+        // Refresh user data to reflect changes
+        await fetchUserData();
+      }
+      return result;
     } catch (error) {
       console.error('Error marking message as read:', error);
       throw error;
