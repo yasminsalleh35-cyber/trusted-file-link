@@ -57,6 +57,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
     totalMessages: 0,
     recentActivity: [] as RecentActivity[]
   });
+
+  const [systemMetrics, setSystemMetrics] = React.useState({
+    storageUsed: 0,
+    storageTotal: 100, // GB - could be configurable
+    activeWorkers: 0,
+    systemLoad: 'Low' as 'Low' | 'Medium' | 'High',
+    storageStatus: 'Healthy' as 'Healthy' | 'Warning' | 'Critical',
+    workersStatus: 'Normal' as 'Normal' | 'High' | 'Critical',
+    loadStatus: 'Optimal' as 'Optimal' | 'Good' | 'Poor'
+  });
   const [isLoading, setIsLoading] = React.useState(true);
 
   // Load real data from Supabase
@@ -190,6 +200,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
           messages: messagesResult.count
         });
 
+        // Load system metrics
+        await loadSystemMetrics();
+
         setIsLoading(false);
       } catch (error) {
         console.error('❌ Error loading dashboard data:', error);
@@ -220,6 +233,120 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
       if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
       if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
       return `${Math.floor(diffInMinutes / 1440)}d ago`;
+    };
+
+    // Load system metrics (storage, active workers, system load)
+    const loadSystemMetrics = async () => {
+      try {
+        console.log('🔄 Loading system metrics...');
+
+        // 1. Calculate Storage Usage from files table
+        const { data: filesData, error: filesError } = await supabase
+          .from('files')
+          .select('file_size');
+
+        if (filesError) {
+          console.error('Error fetching file sizes:', filesError);
+        }
+
+        // Calculate total storage used (convert bytes to GB)
+        const totalBytes = filesData?.reduce((sum, file) => sum + (file.file_size || 0), 0) || 0;
+        const storageUsedGB = totalBytes / (1024 * 1024 * 1024); // Convert to GB
+
+        // 2. Count Active Workers (users who have been active recently)
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+        const { data: activeUsersData, error: activeUsersError } = await supabase
+          .from('profiles')
+          .select('id, updated_at')
+          .eq('role', 'user')
+          .gte('updated_at', twentyFourHoursAgo.toISOString());
+
+        if (activeUsersError) {
+          console.error('Error fetching active users:', activeUsersError);
+        }
+
+        const activeWorkers = activeUsersData?.length || 0;
+
+        // 3. Calculate System Load based on recent activity
+        const oneHourAgo = new Date();
+        oneHourAgo.setHours(oneHourAgo.getHours() - 1);
+
+        const [recentFilesCount, recentMessagesCount] = await Promise.all([
+          supabase
+            .from('files')
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', oneHourAgo.toISOString()),
+          supabase
+            .from('messages')
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', oneHourAgo.toISOString())
+        ]);
+
+        const recentActivity = (recentFilesCount.count || 0) + (recentMessagesCount.count || 0);
+
+        // Determine system load based on recent activity
+        let systemLoad: 'Low' | 'Medium' | 'High' = 'Low';
+        let loadStatus: 'Optimal' | 'Good' | 'Poor' = 'Optimal';
+
+        if (recentActivity > 50) {
+          systemLoad = 'High';
+          loadStatus = 'Poor';
+        } else if (recentActivity > 20) {
+          systemLoad = 'Medium';
+          loadStatus = 'Good';
+        }
+
+        // Determine storage status
+        const storagePercentage = (storageUsedGB / 100) * 100; // Assuming 100GB total
+        let storageStatus: 'Healthy' | 'Warning' | 'Critical' = 'Healthy';
+
+        if (storagePercentage > 90) {
+          storageStatus = 'Critical';
+        } else if (storagePercentage > 75) {
+          storageStatus = 'Warning';
+        }
+
+        // Determine workers status
+        let workersStatus: 'Normal' | 'High' | 'Critical' = 'Normal';
+        if (activeWorkers > 100) {
+          workersStatus = 'Critical';
+        } else if (activeWorkers > 50) {
+          workersStatus = 'High';
+        }
+
+        setSystemMetrics({
+          storageUsed: Math.round(storageUsedGB * 100) / 100, // Round to 2 decimal places
+          storageTotal: 100, // GB - could be configurable
+          activeWorkers,
+          systemLoad,
+          storageStatus,
+          workersStatus,
+          loadStatus
+        });
+
+        console.log('✅ System metrics loaded:', {
+          storageUsed: storageUsedGB,
+          activeWorkers,
+          systemLoad,
+          recentActivity
+        });
+
+      } catch (error) {
+        console.error('❌ Error loading system metrics:', error);
+        
+        // Set fallback metrics on error
+        setSystemMetrics({
+          storageUsed: 0,
+          storageTotal: 100,
+          activeWorkers: 0,
+          systemLoad: 'Low',
+          storageStatus: 'Healthy',
+          workersStatus: 'Normal',
+          loadStatus: 'Optimal'
+        });
+      }
     };
 
     loadDashboardData();
@@ -401,11 +528,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Storage Usage</p>
-                <p className="text-2xl font-bold">2.4 GB</p>
-                <p className="text-xs text-muted-foreground">of 100 GB used</p>
+                <p className="text-2xl font-bold">
+                  {isLoading ? "..." : `${systemMetrics.storageUsed} GB`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  of {systemMetrics.storageTotal} GB used
+                </p>
               </div>
-              <Badge variant="secondary" className="bg-success/10 text-success">
-                Healthy
+              <Badge 
+                variant="secondary" 
+                className={
+                  systemMetrics.storageStatus === 'Critical' 
+                    ? "bg-destructive/10 text-destructive"
+                    : systemMetrics.storageStatus === 'Warning'
+                    ? "bg-warning/10 text-warning"
+                    : "bg-success/10 text-success"
+                }
+              >
+                {systemMetrics.storageStatus}
               </Badge>
             </div>
           </CardContent>
@@ -415,11 +555,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Active Workers</p>
-                <p className="text-2xl font-bold">23</p>
-                <p className="text-xs text-muted-foreground">currently online</p>
+                <p className="text-2xl font-bold">
+                  {isLoading ? "..." : systemMetrics.activeWorkers}
+                </p>
+                <p className="text-xs text-muted-foreground">active in last 24h</p>
               </div>
-              <Badge variant="secondary" className="bg-success/10 text-success">
-                Normal
+              <Badge 
+                variant="secondary" 
+                className={
+                  systemMetrics.workersStatus === 'Critical' 
+                    ? "bg-destructive/10 text-destructive"
+                    : systemMetrics.workersStatus === 'High'
+                    ? "bg-warning/10 text-warning"
+                    : "bg-success/10 text-success"
+                }
+              >
+                {systemMetrics.workersStatus}
               </Badge>
             </div>
           </CardContent>
@@ -429,11 +580,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">System Load</p>
-                <p className="text-2xl font-bold">Low</p>
-                <p className="text-xs text-muted-foreground">optimal performance</p>
+                <p className="text-2xl font-bold">
+                  {isLoading ? "..." : systemMetrics.systemLoad}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {systemMetrics.loadStatus.toLowerCase()} performance
+                </p>
               </div>
-              <Badge variant="secondary" className="bg-success/10 text-success">
-                Optimal
+              <Badge 
+                variant="secondary" 
+                className={
+                  systemMetrics.loadStatus === 'Poor' 
+                    ? "bg-destructive/10 text-destructive"
+                    : systemMetrics.loadStatus === 'Good'
+                    ? "bg-warning/10 text-warning"
+                    : "bg-success/10 text-success"
+                }
+              >
+                {systemMetrics.loadStatus}
               </Badge>
             </div>
           </CardContent>
