@@ -12,6 +12,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminClientsPage from "./pages/admin/AdminClientsPage";
 import AdminFileManagementPage from "./pages/AdminFileManagementPage";
 import AdminMessagesPage from "./pages/admin/AdminMessagesPage";
+import AdminActivityPage from "./pages/admin/AdminActivityPage";
 import SystemTestPage from "./pages/admin/SystemTestPage";
 import ClientDashboardPage from "./pages/ClientDashboardPage";
 import ClientMessagesPage from "./pages/client/ClientMessagesPage";
@@ -103,6 +104,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminMessagesPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/activity" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminActivityPage />
               </ProtectedRoute>
             } 
           />
