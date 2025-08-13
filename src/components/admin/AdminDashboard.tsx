@@ -41,6 +41,8 @@ interface RecentActivity {
   id: string;
   action: string;
   user: string;
+  details: string;
+  timestamp: string;
   time: string;
 }
 
@@ -118,7 +120,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
           console.error('Error fetching messages count:', messagesResult.error);
         }
 
-        // Get recent activity (last 10 actions)
+        // Get comprehensive recent activity (matching Activity Feed logic)
+        const recentActivity = [];
+
+        // 1. Get recent file uploads
         const { data: recentFiles } = await supabase
           .from('files')
           .select(`
@@ -131,8 +136,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
             )
           `)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
 
+        // 2. Get recent messages
         const { data: recentMessages } = await supabase
           .from('messages')
           .select(`
@@ -149,18 +155,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
             )
           `)
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(10);
 
-        // Build recent activity array
-        const recentActivity = [];
+        // 3. Get recent user registrations
+        const { data: recentProfiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, role, created_at')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        // 4. Get recent client registrations
+        const { data: recentClients } = await supabase
+          .from('clients')
+          .select('id, company_name, contact_email, created_at')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        // Build comprehensive activity array (matching Activity Feed format)
         
         // Add file uploads
         if (recentFiles) {
-          recentFiles.forEach((file, index) => {
+          recentFiles.forEach(file => {
             recentActivity.push({
               id: `file-${file.id}`,
-              action: `Document uploaded: ${file.filename}`,
+              action: 'Document uploaded',
               user: (file.profiles as Profile | null)?.full_name || 'Unknown user',
+              details: file.filename,
+              timestamp: file.created_at,
               time: formatTimeAgo(file.created_at)
             });
           });
@@ -168,18 +189,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
 
         // Add messages
         if (recentMessages) {
-          recentMessages.forEach((message, index) => {
+          recentMessages.forEach(message => {
+            const sender = message.sender as Profile | null;
+            const recipient = message.recipient as Profile | null;
             recentActivity.push({
               id: `message-${message.id}`,
-              action: `Message sent: ${message.subject || 'No subject'}`,
-              user: `${(message.sender as Profile | null)?.full_name || 'Unknown'} → ${(message.recipient as Profile | null)?.full_name || 'Unknown'}`,
+              action: 'Message sent',
+              user: sender?.full_name || 'Unknown user',
+              details: `To: ${recipient?.full_name || 'Unknown'} - Subject: ${message.subject || 'No subject'}`,
+              timestamp: message.created_at,
               time: formatTimeAgo(message.created_at)
             });
           });
         }
 
-        // Sort by most recent and limit to 4 items
-        recentActivity.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        // Add user registrations
+        if (recentProfiles) {
+          recentProfiles.forEach(profile => {
+            recentActivity.push({
+              id: `profile-${profile.id}`,
+              action: 'User account created',
+              user: profile.full_name,
+              details: `Role: ${profile.role}`,
+              timestamp: profile.created_at,
+              time: formatTimeAgo(profile.created_at)
+            });
+          });
+        }
+
+        // Add client registrations
+        if (recentClients) {
+          recentClients.forEach(client => {
+            recentActivity.push({
+              id: `client-${client.id}`,
+              action: 'Mining company registered',
+              user: 'System',
+              details: `${client.company_name} (${client.contact_email})`,
+              timestamp: client.created_at,
+              time: formatTimeAgo(client.created_at)
+            });
+          });
+        }
+
+        // Sort by actual timestamp (most recent first) and limit to 4 items
+        recentActivity.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         const limitedActivity = recentActivity.slice(0, 4);
 
         // Update state with real data
@@ -448,10 +501,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
             <div className="space-y-4">
               {stats.recentActivity.map((activity) => (
                 <div key={activity.id} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.user}
+                    <p className="text-xs text-muted-foreground mb-1">
+                      <span className="font-medium">{activity.user}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {activity.details}
                     </p>
                   </div>
                   <div className="text-xs text-muted-foreground">
