@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, 
   Building2, 
@@ -36,13 +37,25 @@ interface AdminDashboardProps {
   onRoleSwitch?: (role: 'admin' | 'client' | 'user') => void;
 }
 
+interface RecentActivity {
+  id: string;
+  action: string;
+  user: string;
+  time: string;
+}
+
+interface Profile {
+  full_name: string;
+  email: string;
+}
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRoleSwitch }) => {
   const [stats, setStats] = React.useState({
     totalClients: 0,
     totalUsers: 0,
     totalFiles: 0,
     totalMessages: 0,
-    recentActivity: [] as any[]
+    recentActivity: [] as RecentActivity[]
   });
   const [isLoading, setIsLoading] = React.useState(true);
 
@@ -50,27 +63,163 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
   React.useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        // This would be replaced with real Supabase queries
-        // For now, showing demo data with loading state
-        setTimeout(() => {
-          setStats({
-            totalClients: 1,
-            totalUsers: 3,
-            totalFiles: 3,
-            totalMessages: 0,
-            recentActivity: [
-              { id: 1, action: 'Demo data loaded', client: 'System', time: 'Just now' },
-              { id: 2, action: 'Admin account created', file: 'admin@financehub.com', time: 'Just now' },
-              { id: 3, action: 'Client account created', recipient: 'client@acme.com', time: 'Just now' },
-              { id: 4, action: 'User account created', user: 'user@acme.com', time: 'Just now' }
-            ]
+        console.log('🔄 Loading real dashboard data from database...');
+        
+        // Execute all queries in parallel for better performance
+        const [
+          clientsResult,
+          usersResult, 
+          filesResult,
+          messagesResult
+        ] = await Promise.all([
+          // 1. Count Mining Companies (clients table)
+          supabase
+            .from('clients')
+            .select('id', { count: 'exact', head: true }),
+          
+          // 2. Count Total Workers (profiles with role 'user')
+          supabase
+            .from('profiles')
+            .select('id', { count: 'exact', head: true })
+            .eq('role', 'user'),
+          
+          // 3. Count Documents Managed (files table)
+          supabase
+            .from('files')
+            .select('id', { count: 'exact', head: true }),
+          
+          // 4. Count Communications (messages table)
+          supabase
+            .from('messages')
+            .select('id', { count: 'exact', head: true })
+        ]);
+
+        // Check for any errors in the queries
+        if (clientsResult.error) {
+          console.error('Error fetching clients count:', clientsResult.error);
+        }
+        if (usersResult.error) {
+          console.error('Error fetching users count:', usersResult.error);
+        }
+        if (filesResult.error) {
+          console.error('Error fetching files count:', filesResult.error);
+        }
+        if (messagesResult.error) {
+          console.error('Error fetching messages count:', messagesResult.error);
+        }
+
+        // Get recent activity (last 10 actions)
+        const { data: recentFiles } = await supabase
+          .from('files')
+          .select(`
+            id,
+            filename,
+            created_at,
+            profiles:uploaded_by (
+              full_name,
+              email
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        const { data: recentMessages } = await supabase
+          .from('messages')
+          .select(`
+            id,
+            subject,
+            created_at,
+            sender:profiles!messages_sender_id_fkey (
+              full_name,
+              email
+            ),
+            recipient:profiles!messages_recipient_id_fkey (
+              full_name,
+              email
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        // Build recent activity array
+        const recentActivity = [];
+        
+        // Add file uploads
+        if (recentFiles) {
+          recentFiles.forEach((file, index) => {
+            recentActivity.push({
+              id: `file-${file.id}`,
+              action: `Document uploaded: ${file.filename}`,
+              user: (file.profiles as Profile | null)?.full_name || 'Unknown user',
+              time: formatTimeAgo(file.created_at)
+            });
           });
-          setIsLoading(false);
-        }, 1000);
+        }
+
+        // Add messages
+        if (recentMessages) {
+          recentMessages.forEach((message, index) => {
+            recentActivity.push({
+              id: `message-${message.id}`,
+              action: `Message sent: ${message.subject || 'No subject'}`,
+              user: `${(message.sender as Profile | null)?.full_name || 'Unknown'} → ${(message.recipient as Profile | null)?.full_name || 'Unknown'}`,
+              time: formatTimeAgo(message.created_at)
+            });
+          });
+        }
+
+        // Sort by most recent and limit to 4 items
+        recentActivity.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        const limitedActivity = recentActivity.slice(0, 4);
+
+        // Update state with real data
+        setStats({
+          totalClients: clientsResult.count || 0,
+          totalUsers: usersResult.count || 0,
+          totalFiles: filesResult.count || 0,
+          totalMessages: messagesResult.count || 0,
+          recentActivity: limitedActivity.length > 0 ? limitedActivity : [
+            { id: 1, action: 'No recent activity', user: 'System', time: 'N/A' }
+          ]
+        });
+
+        console.log('✅ Dashboard data loaded successfully:', {
+          clients: clientsResult.count,
+          users: usersResult.count,
+          files: filesResult.count,
+          messages: messagesResult.count
+        });
+
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error loading dashboard data:', error);
+        console.error('❌ Error loading dashboard data:', error);
+        
+        // Set fallback data on error
+        setStats({
+          totalClients: 0,
+          totalUsers: 0,
+          totalFiles: 0,
+          totalMessages: 0,
+          recentActivity: [
+            { id: 1, action: 'Error loading data', user: 'System', time: 'Just now' }
+          ]
+        });
         setIsLoading(false);
       }
+    };
+
+    // Helper function to format time ago
+    const formatTimeAgo = (dateString: string | null) => {
+      if (!dateString) return 'Unknown time';
+      
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+      
+      if (diffInMinutes < 1) return 'Just now';
+      if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+      if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+      return `${Math.floor(diffInMinutes / 1440)}d ago`;
     };
 
     loadDashboardData();
@@ -175,7 +324,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
                   <div className="flex-1">
                     <p className="text-sm font-medium">{activity.action}</p>
                     <p className="text-xs text-muted-foreground">
-                      {activity.client || activity.file || activity.recipient || activity.user}
+                      {activity.user}
                     </p>
                   </div>
                   <div className="text-xs text-muted-foreground">

@@ -269,21 +269,21 @@ export const CreateNewsModal: React.FC<CreateNewsModalProps> = ({
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {selectedTargets.map((target, index) => (
-                      <Badge
+                      <div
                         key={`${target.type}-${target.id}-${index}`}
-                        variant="secondary"
-                        className="bg-mining-primary/20 text-mining-primary"
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-mining-primary/20 text-mining-primary"
                       >
                         {getTargetIcon(target)}
-                        <span className="ml-1">{target.name}</span>
+                        <span>{target.name}</span>
                         <button
                           type="button"
                           onClick={() => handleTargetToggle(target)}
-                          className="ml-2 hover:text-destructive"
+                          className="ml-1 hover:text-destructive transition-colors"
+                          aria-label={`Remove ${target.name}`}
                         >
                           <X className="h-3 w-3" />
                         </button>
-                      </Badge>
+                      </div>
                     ))}
                   </div>
                 </div>

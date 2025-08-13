@@ -153,10 +153,10 @@ export const AccessibleInput = forwardRef<HTMLInputElement, AccessibleInputProps
               icon && "pl-10"
             )}
             aria-invalid={!!error}
-            aria-describedby={cn(
-              error && errorId,
-              helperText && helperId
-            )}
+            aria-describedby={[
+              error ? errorId : undefined,
+              helperText ? helperId : undefined
+            ].filter(Boolean).join(' ') || undefined}
             aria-required={required}
             {...props}
           />
@@ -272,10 +272,10 @@ export const AccessibleFileUpload: React.FC<AccessibleFileUploadProps> = ({
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown}
         aria-label={`Upload ${multiple ? 'files' : 'file'}. ${accept ? `Accepted formats: ${accept}` : ''} ${maxSize ? `Maximum size: ${formatMaxSize(maxSize)}` : ''}`}
-        aria-describedby={cn(
-          error && errorId,
-          helperText && helperId
-        )}
+        aria-describedby={[
+          error ? errorId : undefined,
+          helperText ? helperId : undefined
+        ].filter(Boolean).join(' ') || undefined}
       >
         <input
           ref={inputRef}
@@ -286,10 +286,10 @@ export const AccessibleFileUpload: React.FC<AccessibleFileUploadProps> = ({
           onChange={handleFileChange}
           disabled={disabled}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-          aria-describedby={cn(
-            error && errorId,
-            helperText && helperId
-          )}
+          aria-describedby={[
+            error ? errorId : undefined,
+            helperText ? helperId : undefined
+          ].filter(Boolean).join(' ') || undefined}
         />
         
         <div className="text-center">
@@ -493,7 +493,7 @@ interface AccessibleFileActionButtonsProps {
   file: {
     id: string;
     name: string;
-    mimeType: string;
+    mime_type: string;
   };
   onDownload: () => void;
   onPreview?: () => void;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
@@ -46,10 +46,128 @@ export const useSupabaseAuth = () => {
     isAuthenticated: false
   });
 
+  // Load user profile from database
+  const loadUserProfile = useCallback(async (supabaseUser: SupabaseUser, retryCount = 0) => {
+    try {
+      console.log('Loading user profile for:', supabaseUser.id, 'attempt:', retryCount + 1);
+      
+      // Only set loading state on first attempt to avoid flickering
+      if (retryCount === 0) {
+        setAuthState(prev => ({ ...prev, isLoading: true }));
+      }
+
+      // Simplified profile query without timeout for better reliability
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          clients:client_id (
+            company_name
+          )
+        `)
+        .eq('id', supabaseUser.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error loading profile:', profileError);
+        
+        // If profile doesn't exist, create one
+        if (profileError.code === 'PGRST116') {
+          console.log('Profile not found, creating new profile');
+          await createUserProfile(supabaseUser);
+          return;
+        }
+        
+        // Retry on network errors with exponential backoff
+        if (retryCount < 1 && (
+          profileError.message?.includes('timeout') ||
+          profileError.message?.includes('network') ||
+          profileError.message?.includes('fetch') ||
+          profileError.code === 'PGRST301' // Connection error
+        )) {
+          console.log('Retrying profile load due to network error...');
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 3000); // Max 3 seconds
+          setTimeout(() => loadUserProfile(supabaseUser, retryCount + 1), delay);
+          return;
+        }
+        
+        throw profileError;
+      }
+
+      if (!profileData) {
+        throw new Error('Profile data is null');
+      }
+
+      console.log('Profile loaded successfully:', profileData.email, profileData.role);
+
+      const user: User = {
+        id: profileData.id,
+        email: profileData.email,
+        role: profileData.role,
+        full_name: profileData.full_name,
+        client_id: profileData.client_id || undefined,
+        client_name: (profileData.clients as { company_name?: string } | null)?.company_name || undefined,
+        created_at: profileData.created_at || undefined,
+        updated_at: profileData.updated_at || undefined
+      };
+
+      setAuthState({
+        user,
+        isLoading: false,
+        isAuthenticated: true
+      });
+      
+      console.log('Auth state updated successfully');
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      
+      // Only set unauthenticated state if we've exhausted retries
+      if (retryCount >= 1) {
+        console.log('Max retries reached, setting unauthenticated state');
+        setAuthState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false
+        });
+      } else {
+        // Keep loading state for retries but don't show "Verifying access..." indefinitely
+        console.log('Will retry profile load...');
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Create user profile for new users
+  const createUserProfile = useCallback(async (supabaseUser: SupabaseUser) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .insert({
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          full_name: supabaseUser.user_metadata?.full_name || 
+                    supabaseUser.email?.split('@')[0] || 'User',
+          role: 'user' // Default role
+        });
+
+      if (error) throw error;
+
+      // Reload profile after creation
+      await loadUserProfile(supabaseUser);
+    } catch (error) {
+      console.error('Error creating user profile:', error);
+      setAuthState({
+        user: null,
+        isLoading: false,
+        isAuthenticated: false
+      });
+    }
+  }, [loadUserProfile]);
+
   // Initialize authentication state
   useEffect(() => {
     let isMounted = true;
-    let initializationTimeout: NodeJS.Timeout;
+    let initializationTimeout: ReturnType<typeof setTimeout> | undefined;
     
     // Initialize authentication with JWT tokens
     const initializeAuth = async (retryCount = 0) => {
@@ -115,7 +233,7 @@ export const useSupabaseAuth = () => {
         if (error) {
           console.error('Error getting session:', error);
           if (retryCount < 1 && isMounted) {
-            setTimeout(() => initializeAuth(retryCount + 1), 2000);
+            initializationTimeout = setTimeout(() => initializeAuth(retryCount + 1), 2000);
             return;
           }
         }
@@ -145,7 +263,7 @@ export const useSupabaseAuth = () => {
           if (retryCount < 1 && (error instanceof Error && 
               (error.message.includes('timeout') || error.message.includes('network')))) {
             console.log('Retrying auth initialization...');
-            setTimeout(() => initializeAuth(retryCount + 1), 1000);
+            initializationTimeout = setTimeout(() => initializeAuth(retryCount + 1), 1000);
             return;
           }
           
@@ -309,124 +427,8 @@ export const useSupabaseAuth = () => {
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Load user profile from database
-  const loadUserProfile = async (supabaseUser: SupabaseUser, retryCount = 0) => {
-    try {
-      console.log('Loading user profile for:', supabaseUser.id, 'attempt:', retryCount + 1);
-      
-      // Only set loading state on first attempt to avoid flickering
-      if (retryCount === 0) {
-        setAuthState(prev => ({ ...prev, isLoading: true }));
-      }
-
-      // Simplified profile query without timeout for better reliability
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          clients:client_id (
-            company_name
-          )
-        `)
-        .eq('id', supabaseUser.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error loading profile:', profileError);
-        
-        // If profile doesn't exist, create one
-        if (profileError.code === 'PGRST116') {
-          console.log('Profile not found, creating new profile');
-          await createUserProfile(supabaseUser);
-          return;
-        }
-        
-        // Retry on network errors with exponential backoff
-        if (retryCount < 1 && (
-          profileError.message?.includes('timeout') ||
-          profileError.message?.includes('network') ||
-          profileError.message?.includes('fetch') ||
-          profileError.code === 'PGRST301' // Connection error
-        )) {
-          console.log('Retrying profile load due to network error...');
-          const delay = Math.min(1000 * Math.pow(2, retryCount), 3000); // Max 3 seconds
-          setTimeout(() => loadUserProfile(supabaseUser, retryCount + 1), delay);
-          return;
-        }
-        
-        throw profileError;
-      }
-
-      if (!profileData) {
-        throw new Error('Profile data is null');
-      }
-
-      console.log('Profile loaded successfully:', profileData.email, profileData.role);
-
-      const user: User = {
-        id: profileData.id,
-        email: profileData.email,
-        role: profileData.role,
-        full_name: profileData.full_name,
-        client_id: profileData.client_id || undefined,
-        client_name: profileData.clients?.company_name || undefined,
-        created_at: profileData.created_at || undefined,
-        updated_at: profileData.updated_at || undefined
-      };
-
-      setAuthState({
-        user,
-        isLoading: false,
-        isAuthenticated: true
-      });
-      
-      console.log('Auth state updated successfully');
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      
-      // Only set unauthenticated state if we've exhausted retries
-      if (retryCount >= 1) {
-        console.log('Max retries reached, setting unauthenticated state');
-        setAuthState({
-          user: null,
-          isLoading: false,
-          isAuthenticated: false
-        });
-      } else {
-        // Keep loading state for retries but don't show "Verifying access..." indefinitely
-        console.log('Will retry profile load...');
-      }
-    }
-  };
-
-  // Create user profile for new users
-  const createUserProfile = async (supabaseUser: SupabaseUser) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: supabaseUser.id,
-          email: supabaseUser.email || '',
-          full_name: supabaseUser.user_metadata?.full_name || 
-                    supabaseUser.email?.split('@')[0] || 'User',
-          role: 'user' // Default role
-        });
-
-      if (error) throw error;
-
-      // Reload profile after creation
-      await loadUserProfile(supabaseUser);
-    } catch (error) {
-      console.error('Error creating user profile:', error);
-      setAuthState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false
-      });
-    }
-  };
 
   // Sign up new user
   const signUp = async (credentials: {
@@ -547,7 +549,7 @@ export const useSupabaseAuth = () => {
             role: freshProfile.role,
             full_name: freshProfile.full_name,
             client_id: freshProfile.client_id || undefined,
-            client_name: freshProfile.clients?.company_name || undefined,
+            client_name: (freshProfile.clients as { company_name?: string } | null)?.company_name || undefined,
             created_at: freshProfile.created_at || undefined,
             updated_at: freshProfile.updated_at || undefined
           };
