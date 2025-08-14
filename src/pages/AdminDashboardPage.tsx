@@ -45,27 +45,27 @@ const AdminDashboardPage: React.FC = () => {
   // Admin navigation items
   const navigationItems = [
     { 
-      name: 'Mining HQ', 
+      name: 'Admin Dashboard', 
       href: '/admin/dashboard', 
       icon: <BarChart3 className="h-5 w-5" />
     },
     { 
-      name: 'Mining Companies', 
+      name: 'Manage Clients', 
       href: '/admin/clients', 
       icon: <Building2 className="h-5 w-5" />
     },
     { 
-      name: 'Workers', 
+      name: 'Manage Users', 
       href: '/admin/users', 
       icon: <Users className="h-5 w-5" />
     },
     { 
-      name: 'Documents', 
+      name: 'File Management', 
       href: '/admin/files', 
       icon: <FileText className="h-5 w-5" />
     },
     { 
-      name: 'Communications', 
+      name: 'Message', 
       href: '/admin/messages', 
       icon: <MessageSquare className="h-5 w-5" />
     },

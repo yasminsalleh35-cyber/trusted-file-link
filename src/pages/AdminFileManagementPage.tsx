@@ -38,6 +38,9 @@ import {
   AlertCircle,
   RefreshCw,
   Plus,
+  Building2,
+  MessageSquare,
+  Settings,
   Grid3X3,
   List,
   SortAsc,
@@ -133,19 +136,34 @@ const AdminFileManagementPage: React.FC = () => {
   // Admin navigation items
   const navigationItems = [
     { 
-      name: 'Mining HQ', 
+      name: 'Admin Dashboard', 
       href: '/admin/dashboard', 
       icon: <BarChart3 className="h-5 w-5" />
     },
     { 
-      name: 'Mining Sites', 
+      name: 'Manage Clients', 
+      href: '/admin/clients', 
+      icon: <Building2 className="h-5 w-5" />
+    },
+    { 
+      name: 'Manage Users', 
       href: '/admin/users', 
       icon: <Users className="h-5 w-5" />
     },
     { 
-      name: 'Documents', 
+      name: 'File Management', 
       href: '/admin/files', 
       icon: <FileText className="h-5 w-5" />
+    },
+    { 
+      name: 'Message', 
+      href: '/admin/messages', 
+      icon: <MessageSquare className="h-5 w-5" />
+    },
+    { 
+      name: 'Settings', 
+      href: '/admin/settings', 
+      icon: <Settings className="h-5 w-5" />
     },
   ];
 

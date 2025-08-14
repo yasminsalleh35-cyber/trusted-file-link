@@ -16,7 +16,8 @@ import {
   Settings, 
   User, 
   Bell,
-  ChevronDown
+  ChevronDown,
+  Home
 } from 'lucide-react';
 import { AnimatedBackground } from './AnimatedBackground';
 
@@ -83,6 +84,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   };
 
   const config = roleConfig[userRole];
+
+  // Get dashboard route based on user role
+  const getDashboardRoute = () => {
+    const dashboardRoutes = {
+      admin: '/admin/dashboard',
+      client: '/client/dashboard',
+      user: '/user/dashboard'
+    };
+    return dashboardRoutes[userRole];
+  };
+
+  // Check if current page is the dashboard
+  const isDashboardPage = () => {
+    const dashboardRoute = getDashboardRoute();
+    return location.pathname === dashboardRoute;
+  };
 
   // Get user initials for avatar
   const getUserInitials = (email: string) => {
@@ -161,7 +178,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Clean header like Image 2 */}
         <header className="bg-card/80 backdrop-blur-sm shadow-sm border-b relative z-10">
           <div className="flex items-center justify-between px-6 py-4">
-            {/* Left side - Hamburger menu and page title */}
+            {/* Left side - Hamburger menu, Home button, and page title */}
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
@@ -171,6 +188,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               >
                 <Menu className="h-5 w-5" />
               </Button>
+              
+              {/* Home button - only show when not on dashboard
+              {!isDashboardPage() && (
+                <Link to={getDashboardRoute()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center space-x-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                  >
+                    <Home className="h-4 w-4" />
+                    <span className="hidden sm:inline">Home</span>
+                  </Button>
+                </Link>
+              )} */}
+              
               <h2 className="text-xl font-semibold text-foreground">
                 Dashboard
               </h2>
@@ -178,6 +210,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
             {/* Right side - Notifications and user */}
             <div className="flex items-center space-x-4">
+              {!isDashboardPage() && (
+                <Link to={getDashboardRoute()}>
+                  <Button
+                    variant = "outline"
+                    size = "sm"
+                    className = "flex items-center space-x-2 hover:bg-primary hover:text-primary-foreground transition-colors"
+                  >
+                    <Home className = "h-4 w-4" />
+                    <span className = "hidden sm:inline">Home</span>
+                  </Button>
+                </Link>
+              )}
+
               {/* Notifications */}
               <Button variant="ghost" size="sm" className="relative">
                 <Bell className="h-5 w-5" />
