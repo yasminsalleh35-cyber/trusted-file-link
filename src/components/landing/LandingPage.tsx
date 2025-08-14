@@ -94,14 +94,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
           {/* Main Heading */}
           <div className="animate-fade-in">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6">
-              Mining Operations
+              Mining Administrative Management
               <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 bg-clip-text text-transparent">
                 {" "}Streamlined
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Comprehensive mining management platform for operations, safety, and administrative oversight 
-              with real-time monitoring and secure file sharing
+              Comprehensive mining data management platform for operations, safety, and administrative oversight with real-time monitoring and secure file sharing
             </p>
           </div>
 
@@ -125,8 +124,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
                   {/* Operations Management */}
                   <Card className="p-6 hover-scale bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200">
                     <HardHat className="h-8 w-8 text-amber-600 mb-4" />
-                    <h3 className="font-semibold text-foreground mb-2">Operations Control</h3>
-                    <p className="text-sm text-muted-foreground">Real-time mining operations monitoring</p>
+                    <h3 className="font-semibold text-foreground mb-2">Updates</h3>
+                    <p className="text-sm text-muted-foreground">Real-Time Updates and News about Your Projects</p>
                   </Card>
 
                   {/* Analytics */}
@@ -157,8 +156,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
               Why Choose Mining Management HUB?
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our comprehensive platform integrates mining operations, safety management, 
-              and administrative oversight to optimize your mining operations
+              Our comprehensive platform integreates all the information you need to help you manage and stay up-to-date on your mineral exploration and mining projects.
             </p>
           </div>
 
@@ -194,7 +192,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
               <Mountain className="h-10 w-10 text-orange-600 mb-4" />
               <h3 className="font-semibold text-foreground mb-2">Operations Oversight</h3>
               <p className="text-sm text-muted-foreground">
-                Comprehensive monitoring and management of mining activities
+                Comprehensive monitoring and management of mining data
               </p>
               <div className="mt-4 flex items-center text-xs text-orange-600">
                 <CheckCircle className="h-4 w-4 mr-1" />
@@ -225,7 +223,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterPortal }) => {
             Ready to Optimize Your Mining Operations?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join mining companies worldwide who trust Mining Management HUB for secure operations management
+            Join mining companies worldwide who trust Mining Management HUB for secure data management
           </p>
           <Button 
             size="lg" 
