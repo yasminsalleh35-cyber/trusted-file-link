@@ -5,13 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Users, User as UserIcon, MoreHorizontal, Edit, Trash2, Search, RefreshCw, Building2, Shield } from 'lucide-react';
+import { EditUserModal } from './EditUserModal';
+import { CreateUserModal } from './CreateUserModal';
+import { Users, User as UserIcon, MoreHorizontal, Edit, Trash2, Search, RefreshCw, Building2, Shield, Plus } from 'lucide-react';
 
 export const UsersTable: React.FC = () => {
-  const { users, isLoading, error, fetchUsers, deleteUser } = useUsers();
+  const { users, isLoading, error, fetchUsers, deleteUser, updateUser, createUser } = useUsers();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  
+  // Modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
@@ -24,6 +31,17 @@ export const UsersTable: React.FC = () => {
 
   const handleDelete = async (u: AdminUser) => {
     await deleteUser(u.id);
+  };
+
+  // Handle edit user
+  const handleEditUser = (user: AdminUser) => {
+    setSelectedUser(user);
+    setShowEditModal(true);
+  };
+
+  // Handle create user
+  const handleCreateUser = () => {
+    setShowCreateModal(true);
   };
 
   const formatDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-');
@@ -69,10 +87,10 @@ export const UsersTable: React.FC = () => {
           </select>
         </div>
 
-        {/* <Button disabled>
-          <Users className="h-4 w-4 mr-2" />
+        <Button onClick={handleCreateUser}>
+          <Plus className="h-4 w-4 mr-2" />
           Add User
-        </Button> */}
+        </Button>
       </div>
 
       {/* Stats */}
@@ -159,7 +177,7 @@ export const UsersTable: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => { /* TODO: open edit modal */ }}>
+                        <DropdownMenuItem onClick={() => handleEditUser(u)}>
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
@@ -176,6 +194,22 @@ export const UsersTable: React.FC = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Modals */}
+      {selectedUser && (
+        <EditUserModal
+          open={showEditModal}
+          onOpenChange={setShowEditModal}
+          user={selectedUser}
+          onUserUpdated={updateUser}
+        />
+      )}
+
+      <CreateUserModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onUserCreated={createUser}
+      />
     </div>
   );
 };

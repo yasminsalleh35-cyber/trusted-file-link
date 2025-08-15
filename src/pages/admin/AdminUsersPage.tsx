@@ -75,10 +75,10 @@ const AdminUsersPage: React.FC = () => {
               Manage users across all client organizations
             </p>
           </div>
-          <Button className="bg-mining-primary hover:bg-mining-primary/90">
+          {/* <Button className="bg-mining-primary hover:bg-mining-primary/90">
             <Plus className="h-4 w-4 mr-2" />
             Add User
-          </Button>
+          </Button> */}
         </div>
 
         {/* Users Table */}
