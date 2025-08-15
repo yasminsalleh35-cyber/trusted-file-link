@@ -96,11 +96,37 @@ export const useNews = () => {
       setIsLoading(true);
       setError(null);
 
-      // Build query based on user role and filters
+      // Build query using direct table joins instead of the problematic view
       let query = supabase
-        .from('news_assignments_detailed')
-        .select('*')
-        .order('assigned_at', { ascending: false });
+        .from('news_assignments')
+        .select(`
+          *,
+          news:news_id (
+            id,
+            title,
+            content,
+            created_at,
+            created_by,
+            profiles:created_by (
+              full_name,
+              role
+            )
+          ),
+          assigned_to_client_profile:assigned_to_client (
+            id,
+            company_name
+          ),
+          assigned_to_user_profile:assigned_to_user (
+            id,
+            full_name,
+            email
+          ),
+          assigned_by_profile:assigned_by (
+            full_name,
+            role
+          )
+        `)
+        .order('created_at', { ascending: false });
 
       // Apply role-based filtering
       if (user.role === 'user') {
@@ -126,11 +152,11 @@ export const useNews = () => {
       }
 
       if (filters.dateFrom) {
-        query = query.gte('assigned_at', filters.dateFrom);
+        query = query.gte('created_at', filters.dateFrom);
       }
 
       if (filters.dateTo) {
-        query = query.lte('assigned_at', filters.dateTo);
+        query = query.lte('created_at', filters.dateTo);
       }
 
       const { data: newsData, error: newsError } = await query;
@@ -141,29 +167,30 @@ export const useNews = () => {
       const enhancedNews: EnhancedNews[] = [];
       const newsMap = new Map<string, EnhancedNews>();
 
-      newsData?.forEach((item) => {
-        if (!item.news_id) return;
+      newsData?.forEach((item: any) => {
+        if (!item.news || !item.news.id) return;
 
-        const newsId = item.news_id;
+        const newsId = item.news.id;
+        const newsItem = item.news;
         
         if (!newsMap.has(newsId)) {
           newsMap.set(newsId, {
             id: newsId,
-            title: item.title || '',
-            content: item.content || '',
-            created_by: item.assigned_by_name || '',
-            created_at: item.assigned_at,
-            updated_at: item.assigned_at,
-            created_by_name: item.assigned_by_name || 'Unknown',
-            created_by_role: 'admin', // Most news created by admins
+            title: newsItem.title || '',
+            content: newsItem.content || '',
+            created_by: newsItem.created_by || '',
+            created_at: newsItem.created_at,
+            updated_at: newsItem.created_at,
+            created_by_name: newsItem.profiles?.full_name || item.assigned_by_profile?.full_name || 'Unknown',
+            created_by_role: newsItem.profiles?.role || item.assigned_by_profile?.role || 'admin',
             assignment_count: 0,
             is_assigned_to_me: false,
-            formatted_time: formatRelativeTime(item.assigned_at || new Date().toISOString())
+            formatted_time: formatRelativeTime(newsItem.created_at || new Date().toISOString())
           });
         }
 
-        const newsItem = newsMap.get(newsId)!;
-        newsItem.assignment_count += 1;
+        const enhancedNewsItem = newsMap.get(newsId)!;
+        enhancedNewsItem.assignment_count += 1;
 
         // Check if assigned to current user
         if (
@@ -171,9 +198,9 @@ export const useNews = () => {
           (user.role === 'client' && item.assigned_to_client === (user.client_id || user.id)) ||
           (user.role === 'admin')
         ) {
-          newsItem.is_assigned_to_me = true;
-          if (item.assigned_at) {
-            newsItem.assigned_at = item.assigned_at;
+          enhancedNewsItem.is_assigned_to_me = true;
+          if (item.created_at) {
+            enhancedNewsItem.assigned_at = item.created_at;
           }
         }
       });
