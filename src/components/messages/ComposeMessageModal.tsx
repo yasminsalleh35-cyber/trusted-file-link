@@ -103,11 +103,13 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
         ];
       case 'client':
         return [
-          { value: 'client_to_user', label: 'To Miner', description: 'Send to your mining crew' }
+          { value: 'client_to_user', label: 'To Miner', description: 'Send to your mining crew' },
+          { value: 'user_to_admin', label: 'To Mining HQ', description: 'Send to headquarters' }
         ];
       case 'user':
         return [
-          { value: 'user_to_admin', label: 'To Mining HQ', description: 'Send to headquarters' }
+          { value: 'user_to_admin', label: 'To Mining HQ', description: 'Send to headquarters' },
+          { value: 'client_to_user', label: 'To Site Manager', description: 'Send to your site manager' }
         ];
       default:
         return [];
@@ -173,10 +175,12 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
         user: 'admin_to_user'
       },
       client: {
-        user: 'client_to_user'
+        user: 'client_to_user',
+        admin: 'user_to_admin' // Client to Admin uses user_to_admin type
       },
       user: {
-        admin: 'user_to_admin'
+        admin: 'user_to_admin',
+        client: 'client_to_user' // User to Client uses client_to_user type (reverse direction)
       }
     };
 
