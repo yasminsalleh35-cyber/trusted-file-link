@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -122,19 +122,24 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
       setIsFetchingRecipients(true);
       let query = supabase.from('profiles').select('*');
 
-      // Filter recipients based on user role
+      // Filter recipients based on user role with RLS-safe constraints
       switch (user.role) {
         case 'admin':
-          // Admin can message clients and users
+          // Admin can message clients and users (no client restriction)
           query = query.in('role', ['client', 'user']);
           break;
         case 'client':
-          // Client can message users in their organization and admins
-          query = query.or(`role.eq.user,role.eq.admin`);
+          // Client can message admins or users within their own client only
+          // Use OR with grouped AND to keep it to their organization
+          query = query.or(
+            `role.eq.admin,and(role.eq.user,client_id.eq.${user.client_id || '00000000-0000-0000-0000-000000000000'})`
+          );
           break;
         case 'user':
-          // User can message admins and their client
-          query = query.in('role', ['admin', 'client']);
+          // User can message admins or their own client (site manager)
+          query = query.or(
+            `role.eq.admin,and(role.eq.client,client_id.eq.${user.client_id || '00000000-0000-0000-0000-000000000000'})`
+          );
           break;
       }
 
@@ -275,6 +280,9 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
             <Send className="h-5 w-5 text-mining-primary" />
             <span>Compose Site Communication</span>
           </DialogTitle>
+          <DialogDescription>
+            Send a direct message to team members based on your role permissions.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">

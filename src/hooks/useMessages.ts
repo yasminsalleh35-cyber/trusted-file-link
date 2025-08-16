@@ -185,13 +185,62 @@ export const useMessages = () => {
     }
 
     try {
+      // Ensure we have an active Supabase session (required for RLS)
+      let { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        sessionData = refreshed || null;
+      }
+      if (!sessionData?.session) {
+        return { success: false, error: 'No active session. Please sign in again.' };
+      }
+
+      // Get the current user from Supabase auth (should exist if session is valid)
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      if (userError || !authUser) {
+        return { success: false, error: 'Authentication failed: ' + (userError?.message || 'No authenticated user') };
+      }
+
+      // Verify sender exists in profiles table using the authenticated user ID
+      const { data: senderProfile, error: senderError } = await supabase
+        .from('profiles')
+        .select('id, role, client_id')
+        .eq('id', authUser.id)
+        .single();
+      if (senderError || !senderProfile) {
+        return { success: false, error: 'Sender profile not found in database' };
+      }
+
+      // Verify recipient exists in profiles table and is allowed by messaging rules
+      const { data: recipientProfile, error: recipientError } = await supabase
+        .from('profiles')
+        .select('id, role, client_id')
+        .eq('id', messageData.recipientId)
+        .single();
+      if (recipientError || !recipientProfile) {
+        return { success: false, error: 'Recipient profile not found in database' };
+      }
+
+      // Basic front-end validation for allowed pairs (RLS enforces too)
+      const senderRole = senderProfile.role as string;
+      const recipientRole = recipientProfile.role as string;
+      const sameClient = senderProfile.client_id && recipientProfile.client_id && senderProfile.client_id === recipientProfile.client_id;
+      const allowed = (
+        (senderRole === 'admin' && (recipientRole === 'client' || recipientRole === 'user')) ||
+        (senderRole === 'client' && (recipientRole === 'user' && sameClient || recipientRole === 'admin')) ||
+        (senderRole === 'user' && (recipientRole === 'client' && sameClient || recipientRole === 'admin'))
+      );
+      if (!allowed) {
+        return { success: false, error: 'Messaging between these roles is not allowed.' };
+      }
+
       const messageInsert: MessageInsert = {
-        sender_id: user.id,
+        sender_id: authUser.id,
         recipient_id: messageData.recipientId,
         subject: messageData.subject || null,
         content: messageData.content,
-        message_type: messageData.messageType,
-        created_at: new Date().toISOString()
+        message_type: messageData.messageType
+        // created_at handled by DB
       };
 
       const { data, error: sendError } = await supabase
@@ -200,12 +249,18 @@ export const useMessages = () => {
         .select()
         .single();
 
-      if (sendError) throw sendError;
+      if (sendError) {
+        // Surface common RLS error with clearer message
+        if ((sendError as any).message?.includes('row-level security')) {
+          return { success: false, error: 'Permission denied by security policy. Check roles and recipient.' };
+        }
+        throw sendError;
+      }
 
       // Refresh messages to include the new one
       await fetchMessages();
 
-      return { success: true, messageId: data.id };
+      return { success: true, messageId: (data as any).id };
     } catch (error) {
       console.error('Error sending message:', error);
       return { 
