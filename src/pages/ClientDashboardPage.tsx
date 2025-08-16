@@ -39,12 +39,12 @@ const ClientDashboardPage: React.FC = () => {
   // Mining Company navigation items
   const navigationItems = [
     { 
-      name: 'Operations Dashboard', 
+      name: 'Dashboard', 
       href: '/client/dashboard', 
       icon: <Mountain className="h-5 w-5" />
     },
     { 
-      name: 'Mining Crew', 
+      name: 'Manage Users', 
       href: '/client/team', 
       icon: <HardHat className="h-5 w-5" />
     },

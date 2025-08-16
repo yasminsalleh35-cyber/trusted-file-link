@@ -16,7 +16,8 @@ import {
   Inbox,
   Mail,
   MailOpen,
-  Building2
+  Building2,
+  Settings
 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { EnhancedMessageCard } from '@/components/messages/EnhancedMessageCard';
@@ -67,12 +68,12 @@ const ClientMessagesPage: React.FC = () => {
   // Client navigation items
   const navigationItems = [
     { 
-      name: 'Operations Dashboard', 
+      name: 'Dashboard', 
       href: '/client/dashboard', 
       icon: <BarChart3 className="h-5 w-5" />
     },
     { 
-      name: 'Mining Crew', 
+      name: 'Manage Users', 
       href: '/client/team', 
       icon: <Users className="h-5 w-5" />
     },
@@ -85,6 +86,11 @@ const ClientMessagesPage: React.FC = () => {
       name: 'Communications', 
       href: '/client/messages', 
       icon: <MessageSquare className="h-5 w-5" />
+    },
+    { 
+      name: 'Site Settings', 
+      href: '/client/settings', 
+      icon: <Settings className="h-5 w-5" />
     },
   ];
 
@@ -182,7 +188,7 @@ const ClientMessagesPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-mining-header">Site Communications</h1>
             <p className="text-muted-foreground font-mining-body">
-              Communicate with Mining HQ and your mining crew
+              Communicate with admin and your users
             </p>
           </div>
           <div className="flex space-x-2">
@@ -226,7 +232,7 @@ const ClientMessagesPage: React.FC = () => {
 
           <Card className="border-l-4 border-l-mining-accent">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium font-mining-body">From HQ</CardTitle>
+              <CardTitle className="text-sm font-medium font-mining-body">From Admin</CardTitle>
               <MailOpen className="h-4 w-4 text-mining-accent" />
             </CardHeader>
             <CardContent>
@@ -239,14 +245,14 @@ const ClientMessagesPage: React.FC = () => {
 
           <Card className="border-l-4 border-l-client">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium font-mining-body">To Crew</CardTitle>
+              <CardTitle className="text-sm font-medium font-mining-body">To User</CardTitle>
               <Building2 className="h-4 w-4 text-client" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold font-mining-mono">
                 {messages.filter(m => m.message_type === 'client_to_user' && m.sender_id).length}
               </div>
-              <p className="text-xs text-muted-foreground">To mining crew</p>
+              <p className="text-xs text-muted-foreground">To Site User</p>
             </CardContent>
           </Card>
         </div>
@@ -297,8 +303,8 @@ const ClientMessagesPage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="admin_to_client">From Mining HQ</SelectItem>
-                  <SelectItem value="client_to_user">To Mining Crew</SelectItem>
+                  <SelectItem value="admin_to_client">From Admin</SelectItem>
+                  <SelectItem value="client_to_user">To Site User</SelectItem>
                 </SelectContent>
               </Select>
 

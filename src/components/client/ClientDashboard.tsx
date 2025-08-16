@@ -217,7 +217,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             {client?.company_name || 'Mining Operations'}
           </h1>
           <p className="text-muted-foreground font-mining-body">
-            Manage your mining crew and operational resources
+            Manage your Site Users and operational resources
           </p>
         </div>
         <div className="flex gap-2">
@@ -226,11 +226,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             className="bg-mining-primary hover:bg-mining-primary/90 text-white"
           >
             <HardHat className="mr-2 h-4 w-4" />
-            Add Crew Member
+            Add User
           </Button>
           <Button variant="outline" onClick={() => onNavigate('/client/messages/new')}>
             <MessageSquare className="mr-2 h-4 w-4" />
-            Contact HQ
+            Contact Admin
           </Button>
           <Button variant="outline" size="sm" onClick={refreshData}>
             <RefreshCw className="h-4 w-4" />
@@ -242,12 +242,12 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="hover:shadow-md transition-shadow border-l-4 border-l-mining-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium font-mining-body">Mining Crew</CardTitle>
+            <CardTitle className="text-sm font-medium font-mining-body">Available Users</CardTitle>
             <HardHat className="h-4 w-4 text-mining-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mining-mono">{stats.teamMemberCount}</div>
-            <p className="text-xs text-muted-foreground">Active miners on site</p>
+            <p className="text-xs text-muted-foreground">Active users on site</p>
           </CardContent>
         </Card>
 
@@ -264,7 +264,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
         <Card className="hover:shadow-md transition-shadow border-l-4 border-l-mining-accent">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium font-mining-body">Site Communications</CardTitle>
+            <CardTitle className="text-sm font-medium font-mining-body">Messages</CardTitle>
             <Activity className="h-4 w-4 text-mining-accent" />
           </CardHeader>
           <CardContent>
@@ -351,10 +351,10 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           <CardHeader>
             <CardTitle className="font-mining-header flex items-center">
               <HardHat className="mr-2 h-5 w-5 text-mining-primary" />
-              Mining Crew
+              Manage Users
             </CardTitle>
             <CardDescription className="font-mining-body">
-              Manage your mining crew members and their site access
+              Manage your site members and their site access
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -371,7 +371,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               ) : (
                 <div className="text-center py-6">
                   <HardHat className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground font-mining-body">No crew members assigned yet</p>
+                  <p className="text-sm text-muted-foreground font-mining-body">No site members assigned yet</p>
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -388,7 +388,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               <div className="mt-4 pt-4 border-t">
                 <Button variant="outline" className="w-full font-mining-body" onClick={() => onNavigate('/client/team')}>
                   <Users className="mr-2 h-4 w-4" />
-                  {teamMembers.length > 3 ? `View All ${teamMembers.length} Crew Members` : 'Manage Mining Crew'}
+                  {teamMembers.length > 3 ? `View All ${teamMembers.length} Crew Members` : 'Manage Users'}
                 </Button>
               </div>
             )}

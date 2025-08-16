@@ -10,6 +10,7 @@ import {
   RefreshCw, 
   Send,
   Filter,
+  User,
   BarChart3,
   FileText,
   Inbox,
@@ -66,7 +67,7 @@ const UserMessagesPage: React.FC = () => {
   // User navigation items
   const navigationItems = [
     { 
-      name: 'Worker Dashboard', 
+      name: 'Dashboard', 
       href: '/user/dashboard', 
       icon: <BarChart3 className="h-5 w-5" />
     },
@@ -80,6 +81,12 @@ const UserMessagesPage: React.FC = () => {
       href: '/user/messages', 
       icon: <MessageSquare className="h-5 w-5" />
     },
+    { 
+      name: 'Your Profile', 
+      href: '/user/profile', 
+      icon: <User className="h-5 w-5" />
+    },
+
   ];
 
   // Handle search
@@ -176,7 +183,7 @@ const UserMessagesPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-mining-header">Site Communications</h1>
             <p className="text-muted-foreground font-mining-body">
-              View updates and communications from site management and Mining HQ
+              View updates and communications from site management and Administrator
             </p>
           </div>
           <div className="flex space-x-2">
@@ -287,9 +294,9 @@ const UserMessagesPage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="admin_to_user">From Mining HQ</SelectItem>
+                  <SelectItem value="admin_to_user">From Admin</SelectItem>
                   <SelectItem value="client_to_user">From Site Manager</SelectItem>
-                  <SelectItem value="user_to_admin">To Mining HQ</SelectItem>
+                  <SelectItem value="user_to_admin">To Admin</SelectItem>
                 </SelectContent>
               </Select>
 

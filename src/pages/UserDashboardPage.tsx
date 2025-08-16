@@ -38,7 +38,7 @@ const UserDashboardPage: React.FC = () => {
   // Mining Worker navigation items
   const navigationItems = [
     { 
-      name: 'Worker Dashboard', 
+      name: 'Dashboard', 
       href: '/user/dashboard', 
       icon: <HardHat className="h-5 w-5" />
     },
@@ -53,7 +53,7 @@ const UserDashboardPage: React.FC = () => {
       icon: <MessageSquare className="h-5 w-5" />
     },
     { 
-      name: 'Worker Profile', 
+      name: 'Your Profile', 
       href: '/user/profile', 
       icon: <User className="h-5 w-5" />
     },
