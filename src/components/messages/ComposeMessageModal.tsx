@@ -165,26 +165,29 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
     }
   };
 
-  // Determine message type based on recipient
+  // Determine message type based on recipient with robust fallbacks
   const getMessageType = (recipientRole: string): MessageType | null => {
     if (!user) return null;
 
+    const senderRole = String(user.role || '').toLowerCase();
+    const recRole = String(recipientRole || '').toLowerCase();
+
     const typeMap: Record<string, Record<string, MessageType>> = {
-      admin: {
-        client: 'admin_to_client',
-        user: 'admin_to_user'
-      },
-      client: {
-        user: 'client_to_user',
-        admin: 'user_to_admin' // Client to Admin uses user_to_admin type
-      },
-      user: {
-        admin: 'user_to_admin',
-        client: 'client_to_user' // User to Client uses client_to_user type (reverse direction)
-      }
+      admin: { client: 'admin_to_client', user: 'admin_to_user' },
+      client: { user: 'client_to_user', admin: 'user_to_admin' },
+      user: { admin: 'user_to_admin', client: 'client_to_user' }
     };
 
-    return typeMap[user.role]?.[recipientRole] || null;
+    const mapped = typeMap[senderRole]?.[recRole];
+    if (mapped) return mapped;
+
+    // Fallback inference if roles are unexpected
+    if (senderRole === 'client' && recRole === 'admin') return 'user_to_admin';
+    if (senderRole === 'user' && recRole === 'client') return 'client_to_user';
+
+    // Last resort: choose first valid type for the sender
+    const options = getValidMessageTypes();
+    return (options[0]?.value as MessageType) || null;
   };
 
   // Handle form submission

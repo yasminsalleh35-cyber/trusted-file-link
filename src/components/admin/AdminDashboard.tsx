@@ -443,7 +443,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
             Oversee mining operations, manage companies and workers, monitor system activity
           </p>
         </div>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button onClick={() => onNavigate('/admin/clients/new')} className="bg-admin hover:bg-admin/90">
             <Plus className="mr-2 h-4 w-4" />
             Add Mining Company
@@ -452,7 +452,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
             <FileText className="mr-2 h-4 w-4" />
             Upload Document
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Statistics Overview */}
@@ -539,7 +539,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
               onClick={() => onNavigate('/admin/clients')}
             >
               <Building2 className="mr-2 h-4 w-4" />
-              Manage Mining Companies
+              Manage Clients.
             </Button>
             <Button
               variant="outline"
@@ -547,7 +547,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate, onRo
               onClick={() => onNavigate('/admin/users')}
             >
               <Users className="mr-2 h-4 w-4" />
-              Manage Workers
+              Manage Users
             </Button>
             <Button
               variant="outline"

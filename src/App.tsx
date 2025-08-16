@@ -15,11 +15,14 @@ import AdminMessagesPage from "./pages/admin/AdminMessagesPage";
 import AdminActivityPage from "./pages/admin/AdminActivityPage";
 import SystemTestPage from "./pages/admin/SystemTestPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import ClientDashboardPage from "./pages/ClientDashboardPage";
 import ClientMessagesPage from "./pages/client/ClientMessagesPage";
+import ClientSettingsPage from "./pages/client/ClientSettingsPage";
 import UserDashboardPage from "./pages/UserDashboardPage";
 import UserFilesPage from "./pages/UserFilesPage";
 import UserMessagesPage from "./pages/user/UserMessagesPage";
+import UserSettingsPage from "./pages/user/UserSettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -83,6 +86,14 @@ const App = () => (
                 <AdminDashboardPage />
               </ProtectedRoute>
             } 
+          />
+          <Route 
+            path="/admin/settings" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminSettingsPage />
+              </ProtectedRoute>
+            }
           />
           <Route 
             path="/admin/clients" 
@@ -151,6 +162,14 @@ const App = () => (
             } 
           />
           <Route 
+            path="/client/settings" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <ClientSettingsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/client/messages" 
             element={
               <ProtectedRoute allowedRoles={['client']}>
@@ -173,6 +192,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <UserDashboardPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/user/settings" 
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <UserSettingsPage />
               </ProtectedRoute>
             } 
           />
