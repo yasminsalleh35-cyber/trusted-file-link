@@ -54,7 +54,7 @@ const UserDashboardPage: React.FC = () => {
     },
     { 
       name: 'Your Profile', 
-      href: '/user/profile', 
+      href: '/user/settings', 
       icon: <User className="h-5 w-5" />
     },
   ];
