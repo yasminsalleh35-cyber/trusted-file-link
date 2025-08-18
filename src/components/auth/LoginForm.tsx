@@ -113,6 +113,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
     setFieldErrors({});
     setIsLoading(true);
 
+    // Simple mapping to enforce demo-qualification consistency
+    const DEMO = {
+      admin: { email: 'admin@financehub.com', password: 'urL!fKNZ8GSn' },
+      client: { email: 'testclient@example.com', password: 'urL!fKNZ8GSn' },
+      user: { email: 'testuser@example.com', password: 'urL!fKNZ8GSn' }
+    } as const;
+
+    const mapAuthError = (msg: string) => {
+      const m = msg.toLowerCase();
+      if (m.includes('invalid login') || m.includes('invalid credentials') || m.includes('invalid email or password')) {
+        return 'Invalid email or password.';
+      }
+      if (m.includes('access denied') && m.includes('selected')) {
+        return 'Selected Demo Login As does not match this account. Choose the correct role.';
+      }
+      if (m.includes('verify that you are human')) return 'Please verify that you are human.';
+      return msg || 'Login failed.';
+    };
+
     try {
       // Comprehensive validation
       if (!email || !password) {
@@ -130,6 +149,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
         throw new Error('Please verify that you are human');
       }
 
+      // Demo-qualification pre-checks (prevent unnecessary round-trip)
+      const demoEntries = Object.entries(DEMO) as Array<[keyof typeof DEMO, {email: string; password: string}]>;
+      const matchedDemo = demoEntries.find(([, v]) => v.email.toLowerCase() === email.toLowerCase());
+      if (matchedDemo) {
+        const [expectedRole, creds] = matchedDemo;
+        if (expectedRole !== userType) {
+          throw new Error('Selected Demo Login As does not match this account. Choose the correct role.');
+        }
+        if (password !== creds.password) {
+          throw new Error('Invalid email or password.');
+        }
+      }
+
       // Use real Supabase authentication with demo login validation
       const result = await signIn({
         email: sanitizeInput(email),
@@ -138,16 +170,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
       });
 
       if (!result.success) {
-        throw new Error(result.error || 'Login failed');
+        throw new Error(mapAuthError(result.error || 'Login failed'));
       }
 
       // The useAuth hook will automatically update the user state
       // No need to call onLogin as the auth state change will trigger re-render
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      setError(errorMessage);
-      handleError(err instanceof Error ? err : new Error(errorMessage), 'LoginForm');
+      const message = err instanceof Error ? mapAuthError(err.message) : 'Login failed.';
+      setError(message);
+      handleError(err instanceof Error ? err : new Error(message), 'LoginForm');
     } finally {
       setIsLoading(false);
     }
