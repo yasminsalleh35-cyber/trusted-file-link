@@ -245,13 +245,23 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     <p className="text-xs text-muted-foreground capitalize">{userRole}</p>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
+                  <DropdownMenuItem asChild>
+                    <a
+                      href={userRole === 'admin' ? '/admin/profile' : userRole === 'client' ? '/client/profile' : '/user/profile'}
+                      className="flex items-center"
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </a>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
+                  <DropdownMenuItem asChild>
+                    <a
+                      href={userRole === 'admin' ? '/admin/settings' : userRole === 'client' ? '/client/settings' : '/user/settings'}
+                      className="flex items-center"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </a>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onLogout} className="text-destructive">

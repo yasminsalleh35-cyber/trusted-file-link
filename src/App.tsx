@@ -19,11 +19,14 @@ import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import ClientDashboardPage from "./pages/ClientDashboardPage";
 import ClientMessagesPage from "./pages/client/ClientMessagesPage";
 import ClientSettingsPage from "./pages/client/ClientSettingsPage";
+import ClientProfilePage from "./pages/client/ClientProfilePage";
 import UserDashboardPage from "./pages/UserDashboardPage";
 import UserFilesPage from "./pages/UserFilesPage";
 import UserMessagesPage from "./pages/user/UserMessagesPage";
 import UserSettingsPage from "./pages/user/UserSettingsPage";
+import UserProfilePage from "./pages/user/UserProfilePage";
 import NotFound from "./pages/NotFound";
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -136,6 +139,14 @@ const App = () => (
             } 
           />
           <Route 
+            path="/admin/profile" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminProfilePage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/admin/system-test" 
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -185,6 +196,14 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/client/profile" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <ClientProfilePage />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Protected User Routes */}
           <Route 
@@ -224,6 +243,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <UserDashboardPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/user/profile" 
+            element={
+              <ProtectedRoute allowedRoles={['user']}>
+                <UserProfilePage />
               </ProtectedRoute>
             } 
           />
