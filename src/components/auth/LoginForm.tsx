@@ -294,7 +294,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-muted/30 rounded-lg">
+          {/* <div className="mt-6 p-4 bg-muted/30 rounded-lg">
             <h4 className="text-sm font-medium mb-2">Demo Mining Access:</h4>
             <div className="text-xs text-muted-foreground space-y-1">
               <p><strong>Admin:</strong> admin@financehub.com / urL!fKNZ8GSn</p>
@@ -304,7 +304,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
             <p className="text-xs text-muted-foreground mt-2">
               Select your mining role above and use the matching credentials
             </p>
-          </div>
+          </div> */}
 
           {/* Registration Link */}
           {onRegister && (

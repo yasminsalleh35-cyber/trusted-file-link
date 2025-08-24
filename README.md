@@ -152,11 +152,15 @@ npm run dev
 ```
 
 ### **Demo Access**
-The application includes a demo mode with role switching:
-- Click the role selector in the top-right corner
-- Choose Admin, Client, or User
-- Use any email format for login
-- Password can be anything for demo purposes
+Use the login form with the built-in demo accounts and role selection:
+
+- In the login form, choose the "Demo Login As" role that matches the account you will use
+- Sign in with one of the following credentials:
+  - Admin: admin@financehub.com / urL!fKNZ8GSn
+  - Client: testclient@example.com / urL!fKNZ8GSn
+  - User: testuser@example.com / urL!fKNZ8GSn
+- Check "I'm not a robot" and click Sign In
+- If the selected role doesn't match the account's actual role, the login will be blocked
 
 ## 🔗 **Backend Integration Plan**
 
