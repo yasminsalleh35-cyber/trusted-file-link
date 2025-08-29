@@ -27,7 +27,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 interface AddTeamMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (memberData: {
+  onAddMember: (memberData: {
     email: string;
     full_name: string;
     password: string;
@@ -37,7 +37,7 @@ interface AddTeamMemberModalProps {
 export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
   isOpen,
   onClose,
-  onAdd
+  onAddMember
 }) => {
   const [formData, setFormData] = useState({
     email: '',
@@ -81,7 +81,7 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
     setIsLoading(true);
 
     try {
-      await onAdd(formData);
+      await onAddMember(formData);
       
       // Reset form
       setFormData({
