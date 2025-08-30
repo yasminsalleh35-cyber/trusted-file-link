@@ -33,6 +33,7 @@ import {
   MapPin,
   RefreshCw
 } from 'lucide-react';
+import { CreateClientModal } from './CreateClientModal';
 
 /**
  * ClientsTable Component
@@ -51,6 +52,7 @@ export const ClientsTable: React.FC = () => {
     isLoading, 
     error, 
     fetchClients,
+    createClient,
     updateClient,
     deleteClient,
     reactivateClient
@@ -59,6 +61,7 @@ export const ClientsTable: React.FC = () => {
   // Modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Search and filter states
@@ -145,8 +148,8 @@ export const ClientsTable: React.FC = () => {
           </select>
         </div>
 
-        {/* Add Client Button - Disabled */}
-        <Button disabled>
+        {/* Add Client */}
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Client
         </Button>
@@ -305,6 +308,12 @@ export const ClientsTable: React.FC = () => {
       </div>
 
       {/* Modals */}
+      <CreateClientModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        onClientCreated={createClient}
+      />
+
       {selectedClient && (
         <>
           <EditClientModal

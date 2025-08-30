@@ -24,6 +24,18 @@ export interface UpdateClientData {
   status?: 'active' | 'inactive';
 }
 
+export interface CreateClientData {
+  company_name: string;
+  contact_email: string;
+  contact_phone?: string | null;
+  address?: string | null;
+  status?: 'active' | 'inactive';
+  // Optional: create primary site manager login for this client
+  create_manager?: boolean;
+  manager_full_name?: string;
+  manager_password?: string;
+}
+
 /**
  * useClients Hook
  * 
@@ -155,12 +167,11 @@ export const useClients = () => {
     }
   };
 
-  // Delete a client (hard delete for now, will be soft delete after status column is added)
+  // Delete a client (hard delete for now; switch to soft when status column exists)
   const deleteClient = async (clientId: string) => {
     try {
       setError(null);
 
-      // For now, do hard delete since status column doesn't exist yet
       const { error } = await supabase
         .from('clients')
         .delete()
@@ -204,15 +215,15 @@ export const useClients = () => {
     }
   };
 
-  // Reactivate a client
+  // Reactivate a client (local only until status column exists)
   const reactivateClient = async (clientId: string) => {
     try {
       setError(null);
 
+      // No DB update for status (column not present). Update timestamp only to keep audit trail.
       const { error } = await supabase
         .from('clients')
         .update({ 
-          status: 'active',
           updated_at: new Date().toISOString()
         })
         .eq('id', clientId);
@@ -240,11 +251,92 @@ export const useClients = () => {
     fetchClients();
   }, []);
 
+  // Create a new client
+  const createClient = async (clientData: CreateClientData) => {
+    try {
+      setError(null);
+
+      // 1) Create client record (only columns that exist)
+      const clientPayload: any = {
+        company_name: clientData.company_name,
+        contact_email: clientData.contact_email,
+        contact_phone: clientData.contact_phone ?? null,
+        address: clientData.address ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: clientRow, error: clientInsertError } = await supabase
+        .from('clients')
+        .insert(clientPayload)
+        .select()
+        .single();
+
+      if (clientInsertError) throw clientInsertError;
+
+      // 2) Optionally create site manager login (mirrors RegistrationForm client flow)
+      if (clientData.create_manager && clientData.manager_full_name && clientData.manager_password) {
+        // Create auth user
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: clientData.contact_email,
+          password: clientData.manager_password,
+          options: {
+            data: {
+              full_name: clientData.manager_full_name,
+              role: 'client',
+              client_id: clientRow.id
+            }
+          }
+        });
+        if (signUpError) throw signUpError;
+
+        // Create profile tied to the new user and client id
+        if (signUpData.user) {
+          const profileData = {
+            id: signUpData.user.id,
+            email: clientData.contact_email,
+            full_name: clientData.manager_full_name,
+            role: 'client' as const,
+            client_id: clientRow.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert(profileData, { onConflict: 'id', ignoreDuplicates: false });
+          if (profileError) throw profileError;
+        }
+      }
+
+      const newClient: Client = {
+        id: clientRow.id,
+        company_name: clientRow.company_name,
+        contact_email: clientRow.contact_email,
+        contact_phone: clientRow.contact_phone || null,
+        address: clientRow.address || null,
+        status: 'active', // local default (status column not in DB yet)
+        created_at: clientRow.created_at,
+        updated_at: clientRow.updated_at,
+        user_count: 0,
+        file_count: 0
+      };
+
+      setClients(prev => [newClient, ...prev]);
+      return { success: true, data: newClient };
+    } catch (err) {
+      console.error('Error creating client:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create client';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  };
+
   return {
     clients,
     isLoading,
     error,
     fetchClients,
+    createClient,
     updateClient,
     deleteClient,
     permanentDeleteClient,
