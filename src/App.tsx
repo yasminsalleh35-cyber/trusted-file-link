@@ -21,6 +21,7 @@ import ClientMessagesPage from "./pages/client/ClientMessagesPage";
 import ClientSettingsPage from "./pages/client/ClientSettingsPage";
 import ClientProfilePage from "./pages/client/ClientProfilePage";
 import ClientTeamPage from "./pages/client/ClientTeamPage";
+import ClientFilesPage from "./pages/client/ClientFilesPage";
 import UserDashboardPage from "./pages/UserDashboardPage";
 import UserFilesPage from "./pages/UserFilesPage";
 import UserMessagesPage from "./pages/user/UserMessagesPage";
@@ -194,6 +195,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['client']}>
                 <ClientTeamPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/client/files" 
+            element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <ClientFilesPage />
               </ProtectedRoute>
             } 
           />
