@@ -50,20 +50,20 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   
   // Form state
-  const [formData, setFormData] = useState<Omit<CreateUserData, 'id'>>({
+  const [formData, setFormData] = useState<CreateUserData>({
     email: '',
     full_name: '',
+    password: '',
     role: 'user',
     client_id: null
   });
 
   // Form errors
-  const [errors, setErrors] = useState<Partial<Omit<CreateUserData, 'id'>>>({});
+  const [errors, setErrors] = useState<Partial<CreateUserData>>({});
 
   // Handle input changes
-  const handleInputChange = (field: keyof Omit<CreateUserData, 'id'>, value: string | null) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
+  const handleInputChange = (field: keyof CreateUserData, value: string | null) => {
+    setFormData(prev => ({ ...prev, [field]: value as any }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
@@ -71,7 +71,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
   // Validate form
   const validateForm = (): boolean => {
-    const newErrors: Partial<Omit<CreateUserData, 'id'>> = {};
+    const newErrors: Partial<CreateUserData> = {};
 
     if (!formData.full_name?.trim()) {
       newErrors.full_name = 'Full name is required';
@@ -81,6 +81,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
+    }
+
+    const pwd = formData.password || '';
+    if (pwd.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
     }
 
     setErrors(newErrors);
@@ -104,8 +109,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     
     try {
       const result = await onUserCreated({
-        id: generateUserId(),
-        ...formData
+        email: formData.email,
+        full_name: formData.full_name,
+        password: formData.password,
+        role: formData.role,
+        client_id: formData.client_id
       });
       
       if (result.success) {
@@ -148,6 +156,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       setFormData({
         email: '',
         full_name: '',
+        password: '',
         role: 'user',
         client_id: null
       });
@@ -209,6 +218,27 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </div>
             {errors.email && (
               <p className="text-sm text-destructive">{errors.email}</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              Temporary Password <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type="password"
+                placeholder="At least 8 characters"
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                className={errors.password ? 'border-destructive' : ''}
+                disabled={isLoading}
+              />
+            </div>
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password}</p>
             )}
           </div>
 

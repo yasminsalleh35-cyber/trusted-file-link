@@ -780,7 +780,25 @@ const AdminFileManagementPage: React.FC = () => {
                             By: {assignment.assigned_by_name} • {new Date(assignment.assigned_at).toLocaleDateString()}
                           </p>
                         </div>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Try to find the file from the loaded files list first
+                            const fileFromList = files.find(f => f.id === assignment.file_id);
+                            if (fileFromList) {
+                              setSelectedFile(fileFromList as any);
+                              setShowAssignmentModal(true);
+                            } else if (assignment.file) {
+                              // If assignment already carries a file object
+                              setSelectedFile(assignment.file as any);
+                              setShowAssignmentModal(true);
+                            } else {
+                              // Fallback: silently ignore (or show a toast) — but do not crash the UI
+                              console.warn('File not found for assignment:', assignment.id, assignment.file_id);
+                            }
+                          }}
+                        >
                           Manage
                         </Button>
                       </div>

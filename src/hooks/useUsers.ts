@@ -25,9 +25,9 @@ export interface UpdateUserData {
 }
 
 export interface CreateUserData {
-  id: string; // profiles.id equals auth user id in our schema
   email: string;
   full_name: string;
+  password: string;
   role?: UserRole;
   client_id?: string | null;
 }
@@ -124,17 +124,36 @@ export const useUsers = () => {
   const createUser = async (payload: CreateUserData) => {
     try {
       setError(null);
-      const { error } = await supabase
+
+      // 1) Create auth user via Supabase (so we get a real auth id)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: payload.email,
+        password: payload.password,
+        options: {
+          data: {
+            full_name: payload.full_name,
+            role: payload.role ?? 'user',
+            client_id: payload.client_id ?? null,
+          }
+        }
+      });
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Auth user creation failed');
+
+      // 2) Upsert profile with the auth user id
+      const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          id: payload.id,
+        .upsert({
+          id: authData.user.id,
           email: payload.email,
           full_name: payload.full_name,
           role: payload.role ?? 'user',
           client_id: payload.client_id ?? null,
           created_at: new Date().toISOString(),
-        });
-      if (error) throw error;
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id', ignoreDuplicates: false });
+      if (profileError) throw profileError;
+
       await fetchUsers();
       return { success: true };
     } catch (err) {

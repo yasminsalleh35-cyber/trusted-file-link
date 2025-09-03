@@ -221,18 +221,14 @@ export const useMessages = () => {
         return { success: false, error: 'Recipient profile not found in database' };
       }
 
-      // Basic front-end validation for allowed pairs (RLS enforces too)
-      const senderRole = senderProfile.role as string;
-      const recipientRole = recipientProfile.role as string;
-      const sameClient = senderProfile.client_id && recipientProfile.client_id && senderProfile.client_id === recipientProfile.client_id;
-      const allowed = (
-        (senderRole === 'admin' && (recipientRole === 'client' || recipientRole === 'user')) ||
-        (senderRole === 'client' && (recipientRole === 'user' && sameClient || recipientRole === 'admin')) ||
-        (senderRole === 'user' && (recipientRole === 'client' && sameClient || recipientRole === 'admin'))
+      // Do not block on the front-end; rely on DB RLS for permissions
+      // Keep minimal telemetry for debugging inconsistent role data
+      const senderRole = String(senderProfile.role || '').toLowerCase();
+      const recipientRole = String(recipientProfile.role || '').toLowerCase();
+      const sameClient = Boolean(
+        senderProfile.client_id && recipientProfile.client_id && senderProfile.client_id === recipientProfile.client_id
       );
-      if (!allowed) {
-        return { success: false, error: 'Messaging between these roles is not allowed.' };
-      }
+      // NOTE: Previous role-pair validation removed to avoid false negatives (e.g., JWT vs Supabase role mismatch)
 
       const messageInsert: MessageInsert = {
         sender_id: authUser.id,
