@@ -48,13 +48,15 @@ interface ComposeMessageModalProps {
     name: string;
     role: string;
   };
+  presetRole?: 'admin' | 'client' | 'user';
 }
 
 export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
   isOpen,
   onClose,
   onSend,
-  preselectedRecipient
+  preselectedRecipient,
+  presetRole
 }) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -126,23 +128,41 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
 
       // Filter recipients based on user role with RLS-safe constraints
       switch (user.role) {
-        case 'admin':
+        case 'admin': {
           // Admin can message clients and users (no client restriction)
-          query = query.in('role', ['client', 'user']);
+          if (presetRole) {
+            query = query.eq('role', presetRole);
+          } else {
+            query = query.in('role', ['client', 'user']);
+          }
           break;
-        case 'client':
+        }
+        case 'client': {
           // Client can message admins or users within their own client only
-          // Use OR with grouped AND to keep it to their organization
-          query = query.or(
-            `role.eq.admin,and(role.eq.user,client_id.eq.${user.client_id || '00000000-0000-0000-0000-000000000000'})`
-          );
+          if (presetRole === 'admin') {
+            query = query.eq('role', 'admin');
+          } else if (presetRole === 'user') {
+            query = query.eq('role', 'user').eq('client_id', user.client_id || '00000000-0000-0000-0000-000000000000');
+          } else {
+            query = query.or(
+              `role.eq.admin,and(role.eq.user,client_id.eq.${user.client_id || '00000000-0000-0000-0000-000000000000'})`
+            );
+          }
           break;
-        case 'user':
+        }
+        case 'user': {
           // User can message admins or their own client (site manager)
-          query = query.or(
-            `role.eq.admin,and(role.eq.client,client_id.eq.${user.client_id || '00000000-0000-0000-0000-000000000000'})`
-          );
+          if (presetRole === 'admin') {
+            query = query.eq('role', 'admin');
+          } else if (presetRole === 'client') {
+            query = query.eq('role', 'client').eq('client_id', user.client_id || '00000000-0000-0000-0000-000000000000');
+          } else {
+            query = query.or(
+              `role.eq.admin,and(role.eq.client,client_id.eq.${user.client_id || '00000000-0000-0000-0000-000000000000'})`
+            );
+          }
           break;
+        }
       }
 
       // Exclude self
@@ -266,8 +286,12 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
   useEffect(() => {
     if (preselectedRecipient) {
       setSelectedRecipient(preselectedRecipient.id);
+    } else if (presetRole) {
+      // If a preset role is provided (e.g., admin), auto-select the first matching recipient
+      const match = recipients.find(r => r.role === presetRole);
+      if (match) setSelectedRecipient(match.id);
     }
-  }, [preselectedRecipient]);
+  }, [preselectedRecipient, presetRole, recipients]);
 
   // Fetch recipients when modal opens
   useEffect(() => {
@@ -304,9 +328,9 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
                 <span className="text-sm text-muted-foreground">Loading recipients...</span>
               </div>
             ) : (
-              <Select value={selectedRecipient} onValueChange={setSelectedRecipient}>
+              <Select value={selectedRecipient} onValueChange={setSelectedRecipient} disabled={!!presetRole}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select recipient..." />
+                  <SelectValue placeholder={presetRole ? 'Admin (preselected)' : 'Select recipient...'} />
                 </SelectTrigger>
                 <SelectContent>
                   {recipients.map((recipient) => {

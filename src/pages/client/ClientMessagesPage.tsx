@@ -64,6 +64,7 @@ const ClientMessagesPage: React.FC = () => {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState<any>(null);
+  const [composePreset, setComposePreset] = useState<'admin' | null>(null);
 
   // Client navigation items
   const navigationItems = [
@@ -174,6 +175,16 @@ const ClientMessagesPage: React.FC = () => {
 
   // Get selected message
   const selectedMessage = selectedMessageId ? getMessageById(selectedMessageId) : null;
+
+  // Auto-open compose if URL has compose=admin
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const compose = params.get('compose');
+    if (compose === 'admin') {
+      setComposePreset('admin');
+      setIsComposeOpen(true);
+    }
+  }, []);
 
   return (
     <DashboardLayout 
@@ -396,6 +407,10 @@ const ClientMessagesPage: React.FC = () => {
         onClose={() => {
           setIsComposeOpen(false);
           setReplyToMessage(null);
+          setComposePreset(null);
+          const url = new URL(window.location.href);
+          url.searchParams.delete('compose');
+          window.history.replaceState({}, '', url.toString());
         }}
         onSend={handleSendMessage}
         preselectedRecipient={replyToMessage ? {
@@ -403,6 +418,7 @@ const ClientMessagesPage: React.FC = () => {
           name: replyToMessage.sender_name,
           role: replyToMessage.sender_role
         } : undefined}
+        presetRole={composePreset === 'admin' ? 'admin' : undefined}
       />
     </DashboardLayout>
   );

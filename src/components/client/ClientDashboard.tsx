@@ -228,7 +228,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <HardHat className="mr-2 h-4 w-4" />
             Add User
           </Button>
-          <Button variant="outline" onClick={() => onNavigate('/client/messages/new')}>
+          <Button variant="outline" onClick={() => onNavigate('/client/messages?compose=admin')}>
             <MessageSquare className="mr-2 h-4 w-4" />
             Contact Admin
           </Button>
