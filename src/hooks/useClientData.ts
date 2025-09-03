@@ -93,8 +93,13 @@ export const useClientData = () => {
       // Fetch file assignments count (placeholder - will implement when files table is ready)
       const assignedFilesCount = 0; // TODO: Implement when files table is available
 
-      // Fetch unread messages count (placeholder - will implement when messages table is ready)
-      const unreadMessagesCount = 0; // TODO: Implement when messages table is available
+      // Fetch unread messages count for the current client user
+      const { count: unreadMessagesCount, error: unreadError } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('recipient_id', user.id)
+        .is('read_at', null);
+      if (unreadError) throw unreadError;
 
       // Calculate storage used (placeholder)
       const storageUsed = '0 MB'; // TODO: Implement when file storage is available
