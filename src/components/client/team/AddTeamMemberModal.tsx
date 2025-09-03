@@ -47,13 +47,46 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Generate random password
+  // Generate strong random password that meets policy
   const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    const length = 14; // default length
+    const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lower = 'abcdefghijklmnopqrstuvwxyz';
+    const digits = '0123456789';
+    const specials = '!@#$%^&*()-_=+[]{};:,.<>?';
+    const all = upper + lower + digits + specials;
+
+    // Helper to get cryptographically strong random int
+    const rand = (max: number) => {
+      if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+        const array = new Uint32Array(1);
+        window.crypto.getRandomValues(array);
+        return array[0] % max;
+      }
+      return Math.floor(Math.random() * max);
+    };
+
+    // Ensure at least one from each set
+    const pick = (set: string) => set[rand(set.length)];
+    let passwordChars = [
+      pick(upper),
+      pick(lower),
+      pick(digits),
+      pick(specials)
+    ];
+
+    // Fill the rest
+    for (let i = passwordChars.length; i < length; i++) {
+      passwordChars.push(all[rand(all.length)]);
     }
+
+    // Shuffle to avoid predictable positions
+    for (let i = passwordChars.length - 1; i > 0; i--) {
+      const j = rand(i + 1);
+      [passwordChars[i], passwordChars[j]] = [passwordChars[j], passwordChars[i]];
+    }
+
+    const password = passwordChars.join('');
     setFormData(prev => ({ ...prev, password }));
   };
 
@@ -73,8 +106,15 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
+    // Strong password validation to meet system policy
+    const password = formData.password;
+    const hasMinLen = password.length >= 12;
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasDigit = /\d/.test(password);
+    const hasSpecial = /[!@#$%^&*()\-_=+\[\]{};:,\.<>\?]/.test(password);
+    if (!(hasMinLen && hasUpper && hasLower && hasDigit && hasSpecial)) {
+      setError('Password must be at least 12 chars and include uppercase, lowercase, number, and special character');
       return;
     }
 
@@ -185,7 +225,7 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              The user will be asked to change this password on first login.
+              Must be at least 12 characters and include uppercase, lowercase, number, and special character. The user will be asked to change this password on first login.
             </p>
           </div>
 
