@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Mail, Lock, User, Building2, Shield, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { validatePassword } from '@/utils/validation';
 
 /**
  * RegistrationForm Component
@@ -150,9 +151,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
       throw new Error('Please enter a valid email address');
     }
 
-    // Password validation
-    if (formData.password.length < 8) {
-      throw new Error('Password must be at least 8 characters long');
+    // Password validation (strong policy)
+    try {
+      validatePassword(formData.password);
+    } catch (e) {
+      throw new Error(e instanceof Error ? e.message : 'Invalid password');
     }
 
     if (formData.password !== formData.confirmPassword) {

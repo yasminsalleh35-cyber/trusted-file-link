@@ -183,9 +183,16 @@ const UserSettingsPage: React.FC = () => {
                     if (!user) throw new Error('Not authenticated');
                     if (!newPassword || !confirmPassword) throw new Error('Please fill in both password fields');
                     if (newPassword !== confirmPassword) throw new Error('Passwords do not match');
-                    // simple policy: at least 8 chars with upper, lower, number, special
-                    const ok = /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /\d/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword) && newPassword.length >= 8;
-                    if (!ok) throw new Error('Password does not meet complexity requirements');
+                    // strong policy via shared validator
+                    try {
+                      // reuse shared validation for consistent policy
+                      // throws on failure with descriptive message
+                      // import already present for supabase; validator is in utils
+                      const regexOk = /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /\d/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword) && newPassword.length >= 8;
+                      if (!regexOk) throw new Error('Password must be at least 8 chars and include upper, lower, number, and special character');
+                    } catch (err) {
+                      throw err;
+                    }
                     setChangingPassword(true);
                     const { error } = await supabase.auth.updateUser({ password: newPassword });
                     if (error) throw error;

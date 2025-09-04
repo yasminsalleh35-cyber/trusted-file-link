@@ -84,8 +84,8 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     }
 
     const pwd = formData.password || '';
-    if (pwd.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+    if (!(/[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /\d/.test(pwd) && /[^A-Za-z0-9]/.test(pwd) && pwd.length >= 8)) {
+      newErrors.password = 'Password must be at least 8 chars and include upper, lower, number, and special character';
     }
 
     setErrors(newErrors);

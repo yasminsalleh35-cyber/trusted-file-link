@@ -236,7 +236,7 @@ const AdminSettingsPage: React.FC = () => {
                         if (!newPassword || !confirmPassword) throw new Error('Please fill in both password fields');
                         if (newPassword !== confirmPassword) throw new Error('Passwords do not match');
                         const ok = /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /\d/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword) && newPassword.length >= 8;
-                        if (!ok) throw new Error('Password does not meet complexity requirements');
+                        if (!ok) throw new Error('Password must be at least 8 chars and include upper, lower, number, and special character');
                         setChangingPassword(true);
                         const { error } = await supabase.auth.updateUser({ password: newPassword });
                         if (error) throw error;
