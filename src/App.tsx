@@ -1,3 +1,4 @@
+import React, { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,6 +30,11 @@ import UserSettingsPage from "./pages/user/UserSettingsPage";
 import UserProfilePage from "./pages/user/UserProfilePage";
 import NotFound from "./pages/NotFound";
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
+
+// Lazy-loaded public/auth pages
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+const AccountSecurityPage = lazy(() => import('./pages/user/AccountSecurityPage'));
 
 const queryClient = new QueryClient();
 
@@ -79,6 +85,8 @@ const App = () => (
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/forgot-password" element={<Suspense fallback={null}><ForgotPassword /></Suspense>} />
+          <Route path="/auth/reset-password" element={<Suspense fallback={null}><ResetPassword /></Suspense>} />
           
           {/* Root redirect - goes to login if not authenticated */}
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -237,6 +245,14 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <UserSettingsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/user/account-security" 
+            element={
+              <ProtectedRoute allowedRoles={['admin','client','user']}>
+                <Suspense fallback={null}><AccountSecurityPage /></Suspense>
               </ProtectedRoute>
             } 
           />

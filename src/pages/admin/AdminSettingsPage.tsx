@@ -11,6 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Settings, BarChart3, Building2, Users, FileText, MessageSquare, Shield } from 'lucide-react';
 import { JWTAuthService } from '@/services/jwtAuth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { validatePassword } from '@/utils/validation';
 
 const AdminSettingsPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -29,6 +31,11 @@ const AdminSettingsPage: React.FC = () => {
 
   // Security
   const [busySecurity, setBusySecurity] = useState(false);
+
+  // Account security (inline)
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -188,13 +195,66 @@ const AdminSettingsPage: React.FC = () => {
               <CardTitle className="font-mining-body">Security</CardTitle>
               <CardDescription>Manage access and sessions</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3 sm:flex-row">
-              <Button variant="outline" onClick={sendPasswordReset} disabled={busySecurity}>
-                <Shield className="h-4 w-4 mr-2" /> Send password reset email
-              </Button>
-              <Button variant="destructive" onClick={signOutEverywhere} disabled={busySecurity}>
-                Sign out everywhere
-              </Button>
+            <CardContent className="space-y-6">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button variant="outline" onClick={sendPasswordReset} disabled={busySecurity}>
+                  <Shield className="h-4 w-4 mr-2" /> Send password reset email
+                </Button>
+                <Button variant="destructive" onClick={signOutEverywhere} disabled={busySecurity}>
+                  Sign out everywhere
+                </Button>
+              </div>
+
+              {/* Inline Account Security */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="Strong password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Must include uppercase, lowercase, number, and special character</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        if (!user) throw new Error('Not authenticated');
+                        if (!newPassword || !confirmPassword) throw new Error('Please fill in both password fields');
+                        if (newPassword !== confirmPassword) throw new Error('Passwords do not match');
+                        const ok = /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /\d/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword) && newPassword.length >= 8;
+                        if (!ok) throw new Error('Password does not meet complexity requirements');
+                        setChangingPassword(true);
+                        const { error } = await supabase.auth.updateUser({ password: newPassword });
+                        if (error) throw error;
+                        setNewPassword('');
+                        setConfirmPassword('');
+                        toast({ title: 'Password changed', description: 'Your password has been updated.' });
+                      } catch (e) {
+                        toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to change password', variant: 'destructive' });
+                      } finally {
+                        setChangingPassword(false);
+                      }
+                    }}
+                    disabled={changingPassword}
+                  >
+                    {changingPassword ? 'Changing...' : 'Change password'}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

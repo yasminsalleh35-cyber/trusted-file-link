@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Settings, BarChart3, Building2, MessageSquare, FileText } from 'lucide-react';
+import { Settings, BarChart3, Building2, MessageSquare, FileText, Shield } from 'lucide-react';
 
 const ClientSettingsPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -26,6 +26,11 @@ const ClientSettingsPage: React.FC = () => {
   const [emailNotifications, setEmailNotifications] = useState<boolean>(() => localStorage.getItem('pref_email_notifications') === 'true');
   const [inAppNotifications, setInAppNotifications] = useState<boolean>(() => localStorage.getItem('pref_inapp_notifications') !== 'false');
   const [savingPrefs, setSavingPrefs] = useState(false);
+
+  // Account security (inline)
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -98,7 +103,7 @@ const ClientSettingsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           {/* Profile & Company */}
           <Card>
             <CardHeader>
@@ -160,6 +165,61 @@ const ClientSettingsPage: React.FC = () => {
               </div>
               <Button onClick={savePreferences} disabled={savingPrefs}>
                 {savingPrefs ? 'Saving...' : 'Save Preferences'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Account Security - inline form */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-mining-body">Account Security</CardTitle>
+              <CardDescription>Change your account password</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Strong password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">Must include uppercase, lowercase, number, and special character</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="Re-enter password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={async () => {
+                  try {
+                    if (!user) throw new Error('Not authenticated');
+                    if (!newPassword || !confirmPassword) throw new Error('Please fill in both password fields');
+                    if (newPassword !== confirmPassword) throw new Error('Passwords do not match');
+                    const ok = /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /\d/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword) && newPassword.length >= 8;
+                    if (!ok) throw new Error('Password does not meet complexity requirements');
+                    setChangingPassword(true);
+                    const { error } = await supabase.auth.updateUser({ password: newPassword });
+                    if (error) throw error;
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    toast({ title: 'Password changed', description: 'Your password has been updated.' });
+                  } catch (e) {
+                    toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to change password', variant: 'destructive' });
+                  } finally {
+                    setChangingPassword(false);
+                  }
+                }}
+                disabled={changingPassword}
+              >
+                {changingPassword ? 'Changing...' : 'Change password'}
               </Button>
             </CardContent>
           </Card>

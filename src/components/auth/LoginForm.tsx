@@ -306,25 +306,28 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onRegister }) => 
             </p>
           </div> */}
 
-          {/* Registration Link */}
-          {onRegister && (
-            <div className="mt-4 text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={onRegister}
-                className="text-sm text-muted-foreground hover:text-primary"
-              >
-                Don't have an account? Register here
-              </Button>
-            </div>
-          )}
-
-          {/* Additional Links */}
-          <div className="mt-2 text-center">
-            <p className="text-sm text-muted-foreground">
-              Need help? Contact Mining HQ Support
-            </p>
+          {/* Links */}
+          <div className="mt-4 text-center space-y-1">
+            <Button
+              type="button"
+              variant="link"
+              onClick={() => (window.location.href = '/auth/forgot-password')}
+              className="text-sm text-muted-foreground hover:text-primary"
+            >
+              Forgot your password?
+            </Button>
+            {onRegister && (
+              <div>
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={onRegister}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  Don't have an account? Register here
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
