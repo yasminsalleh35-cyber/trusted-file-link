@@ -236,7 +236,14 @@ const UserFilesPage: React.FC = () => {
                 key={file.id}
                 file={file}
                 onDownload={downloadFile}
-                onPreview={previewFile}
+                onPreview={async (f) => {
+                  try {
+                    const url = await previewFile(f);
+                    window.open(url, '_blank', 'noopener');
+                  } catch (e) {
+                    console.error('Preview failed:', e);
+                  }
+                }}
                 onAssign={handleFileAssign}
                 onDelete={handleFileDelete}
                 canManage={false} // Users cannot manage files

@@ -454,6 +454,23 @@ export const useFileManagement = () => {
     });
   };
 
+  // Generate forced download URL to set Content-Disposition attachment
+  const getForcedDownloadUrl = async (filePath: string, filename: string): Promise<string> => {
+    return await performanceTimer.measureAsync('getForcedDownloadUrl', async () => {
+      try {
+        const { data, error } = await supabase.storage
+          .from('files')
+          .createSignedUrl(filePath, 3600, { download: filename });
+        if (error) throw error;
+        if (!data?.signedUrl) throw new Error('No signed URL returned');
+        return data.signedUrl;
+      } catch (error) {
+        console.error('Error generating forced download URL:', error);
+        throw error;
+      }
+    });
+  };
+
   // Log file access
   const logFileAccess = async (
     fileId: string, 
@@ -474,19 +491,19 @@ export const useFileManagement = () => {
     }
   };
 
-  // Download file
+  // Download file (force download)
   const downloadFile = async (file: ManagedFile) => {
     await safeAsync(
       async () => {
         // Log access
         await logFileAccess(file.id, 'download');
 
-        // Get download URL using adapter for safe path access
+        // Build a forced download URL that sets Content-Disposition attachment
         const storagePath = getStoragePath(file);
-        const downloadUrl = await withRetry(() => getDownloadUrl(storagePath), 3);
-
-        // Trigger download using adapter for safe filename access
         const filename = getFileDisplayName(file);
+        const downloadUrl = await withRetry(() => getForcedDownloadUrl(storagePath, filename), 3);
+
+        // Trigger browser download
         const link = document.createElement('a');
         link.href = downloadUrl;
         link.download = filename;
@@ -518,6 +535,12 @@ export const useFileManagement = () => {
     }
   };
 
+  // Get a signed URL without forcing download (no access log)
+  const getFileUrl = async (file: ManagedFile): Promise<string> => {
+    const storagePath = getStoragePath(file);
+    return await getDownloadUrl(storagePath);
+  };
+
   // Refresh all data
   const refreshData = async () => {
     await Promise.all([fetchFiles(), fetchAssignments()]);
@@ -541,6 +564,7 @@ export const useFileManagement = () => {
     deleteFile,
     downloadFile,
     previewFile,
+    getFileUrl,
     refreshData,
     logFileAccess
   };

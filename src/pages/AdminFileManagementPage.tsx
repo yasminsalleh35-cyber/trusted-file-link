@@ -96,7 +96,9 @@ const AdminFileManagementPage: React.FC = () => {
     deleteFile,
     downloadFile,
     previewFile: previewFileFromHook,
-    refreshData
+    refreshData,
+    getFileUrl,
+    logFileAccess
   } = useFileManagement();
 
   // Search and filtering state with performance optimization
@@ -244,6 +246,15 @@ const AdminFileManagementPage: React.FC = () => {
   const handlePreviewFile = (file: any) => {
     setPreviewFile(file);
     setShowPreviewModal(true);
+  };
+
+  // Force download when clicking Download
+  const handleDownloadClick = async (file: any) => {
+    try {
+      await downloadFile(file);
+    } catch (e) {
+      console.error('Failed to download file:', e);
+    }
   };
 
   // Handle file assignment submission
@@ -727,7 +738,7 @@ const AdminFileManagementPage: React.FC = () => {
                     
                     <EnhancedFileCard
                       file={file}
-                      onDownload={downloadFile}
+                      onDownload={handleDownloadClick}
                       onPreview={handlePreviewFile}
                       onAssign={handleAssignFile}
                       onDelete={deleteFile}

@@ -241,7 +241,14 @@ const ClientFilesPage: React.FC = () => {
                   key={file.id}
                   file={file}
                   onDownload={downloadFile}
-                  onPreview={previewFile}
+                  onPreview={async (f) => {
+                    try {
+                      const url = await previewFile(f);
+                      window.open(url, '_blank', 'noopener');
+                    } catch (e) {
+                      console.error('Preview failed:', e);
+                    }
+                  }}
                   onAssign={() => { /* Clients: assignment handled elsewhere or future enhancement */ }}
                   onDelete={() => { /* Clients: deletion restricted by policy; future enhancement */ }}
                   canManage={false}
@@ -288,7 +295,14 @@ const ClientFilesPage: React.FC = () => {
                           {file.created_at ? new Date(file.created_at).toLocaleDateString() : '—'}
                         </TableCell>
                         <TableCell className="text-right space-x-2">
-                          <Button variant="ghost" size="sm" onClick={() => previewFile(file)}>
+                          <Button variant="ghost" size="sm" onClick={async () => {
+                            try {
+                              const url = await previewFile(file);
+                              window.open(url, '_blank', 'noopener');
+                            } catch (e) {
+                              console.error('Preview failed:', e);
+                            }
+                          }}>
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => downloadFile(file)}>
