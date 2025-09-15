@@ -328,9 +328,9 @@ export const ComposeMessageModal: React.FC<ComposeMessageModalProps> = ({
                 <span className="text-sm text-muted-foreground">Loading recipients...</span>
               </div>
             ) : (
-              <Select value={selectedRecipient} onValueChange={setSelectedRecipient} disabled={!!presetRole}>
+              <Select value={selectedRecipient} onValueChange={setSelectedRecipient}>
                 <SelectTrigger>
-                  <SelectValue placeholder={presetRole ? 'Admin (preselected)' : 'Select recipient...'} />
+                  <SelectValue placeholder={presetRole ? `Select ${getRoleConfig(presetRole).label}...` : 'Select recipient...'} />
                 </SelectTrigger>
                 <SelectContent>
                   {recipients.map((recipient) => {

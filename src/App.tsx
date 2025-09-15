@@ -34,7 +34,7 @@ import AdminProfilePage from "./pages/admin/AdminProfilePage";
 // Lazy-loaded public/auth pages
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
-const AccountSecurityPage = lazy(() => import('./pages/user/AccountSecurityPage'));
+
 
 const queryClient = new QueryClient();
 
@@ -245,14 +245,6 @@ const App = () => (
             element={
               <ProtectedRoute allowedRoles={['user']}>
                 <UserSettingsPage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/user/account-security" 
-            element={
-              <ProtectedRoute allowedRoles={['admin','client','user']}>
-                <Suspense fallback={null}><AccountSecurityPage /></Suspense>
               </ProtectedRoute>
             } 
           />

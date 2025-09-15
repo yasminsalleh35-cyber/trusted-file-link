@@ -167,21 +167,16 @@ export const useClients = () => {
     }
   };
 
-  // Delete a client (hard delete for now; switch to soft when status column exists)
+  // Delete a client via admin API (cascades: removes auth users + profiles, then client)
   const deleteClient = async (clientId: string) => {
     try {
       setError(null);
 
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', clientId);
+      const { deleteClientCascade } = await import('@/lib/adminApi');
+      const resp = await deleteClientCascade(clientId, true);
+      if (!resp.ok) throw new Error(resp.error || 'Admin cascade delete failed');
 
-      if (error) throw error;
-
-      // Remove from local state
       setClients(prev => prev.filter(client => client.id !== clientId));
-
       return { success: true };
     } catch (err) {
       console.error('Error deleting client:', err);

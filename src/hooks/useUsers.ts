@@ -107,13 +107,19 @@ export const useUsers = () => {
   const deleteUser = async (id: string) => {
     try {
       setError(null);
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
+
+      // 1) Call admin API to delete Supabase Auth user and cleanup profile
+      const { deleteAuthUser } = await import('@/lib/adminApi');
+      const adminResp = await deleteAuthUser(id);
+      if (!adminResp.ok) {
+        throw new Error(adminResp.error || 'Admin delete failed');
+      }
+
+      // 2) As a safety net, try to remove profile row (admin API already attempts this)
+      await supabase.from('profiles').delete().eq('id', id);
+
       setUsers(prev => prev.filter(u => u.id !== id));
-      return { success: true };
+      return { success: true, warning: adminResp.warning } as any;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to delete user';
       setError(msg);

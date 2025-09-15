@@ -97,6 +97,7 @@ const AdminMessagesPage: React.FC = () => {
   const [isCreateNewsOpen, setIsCreateNewsOpen] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState<any>(null);
   const [assignmentTargets, setAssignmentTargets] = useState<any[]>([]);
+  const [composePresetRole, setComposePresetRole] = useState<'admin' | 'client' | 'user' | undefined>(undefined);
 
   // Admin navigation items
   const navigationItems = [
@@ -398,7 +399,7 @@ const AdminMessagesPage: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsComposeOpen(true)}
+                    onClick={() => { setComposePresetRole('client'); setIsComposeOpen(true); }}
                   >
                     <Building2 className="h-4 w-4 mr-2 text-client" />
                     Message Site Managers
@@ -406,7 +407,7 @@ const AdminMessagesPage: React.FC = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsComposeOpen(true)}
+                    onClick={() => { setComposePresetRole('user'); setIsComposeOpen(true); }}
                   >
                     <Users className="h-4 w-4 mr-2 text-user" />
                     Message Workers
@@ -696,6 +697,7 @@ const AdminMessagesPage: React.FC = () => {
         onClose={() => {
           setIsComposeOpen(false);
           setReplyToMessage(null);
+          setComposePresetRole(undefined);
         }}
         onSend={handleSendMessage}
         preselectedRecipient={replyToMessage ? {
@@ -703,6 +705,7 @@ const AdminMessagesPage: React.FC = () => {
           name: replyToMessage.sender_name,
           role: replyToMessage.sender_role
         } : undefined}
+        presetRole={composePresetRole}
       />
 
       {/* Create News Modal */}
