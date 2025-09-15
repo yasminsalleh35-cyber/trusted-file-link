@@ -144,31 +144,77 @@ export function validateFileSecurityStrict(file: File): void {
  * Validate MIME type consistency with file extension
  */
 function validateMimeTypeConsistency(fileName: string, mimeType: string): boolean {
+  // Some browsers may provide empty or generic MIME types (e.g., for ZIP)
+  // We handle these gracefully by falling back to extension-based allowlist.
   const extension = fileName.split('.').pop()?.toLowerCase();
   if (!extension) return false;
 
   const mimeTypeMap: Record<string, string[]> = {
+    // Images
     'jpg': ['image/jpeg'],
     'jpeg': ['image/jpeg'],
     'png': ['image/png'],
     'gif': ['image/gif'],
     'webp': ['image/webp'],
-    'pdf': ['application/pdf'],
-    'txt': ['text/plain'],
-    'csv': ['text/csv', 'application/csv'],
+
+    // Documents
+    'pdf': [
+      'application/pdf',
+      'application/x-pdf',
+      'application/acrobat',
+      'applications/pdf',
+      'text/pdf',
+      'text/x-pdf',
+      'application/octet-stream' // common fallback from some browsers
+    ],
+    'txt': ['text/plain', 'application/octet-stream'],
+    'csv': ['text/csv', 'application/csv', 'application/octet-stream'],
     'json': ['application/json'],
-    'doc': ['application/msword'],
-    'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-    'xls': ['application/vnd.ms-excel'],
-    'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-    'ppt': ['application/vnd.ms-powerpoint'],
-    'pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
-    'zip': ['application/zip'],
-    'rar': ['application/x-rar-compressed'],
-    '7z': ['application/x-7z-compressed']
+
+    // Office formats
+    'doc': ['application/msword', 'application/octet-stream'],
+    'docx': [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/zip', // OOXML is a zip container
+      'application/octet-stream'
+    ],
+    'xls': [
+      'application/vnd.ms-excel',
+      'application/msexcel',
+      'application/x-msexcel',
+      'application/octet-stream'
+    ],
+    'xlsx': [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/zip',
+      'application/octet-stream'
+    ],
+    'ppt': ['application/vnd.ms-powerpoint', 'application/octet-stream'],
+    'pptx': [
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/zip',
+      'application/octet-stream'
+    ],
+
+    // Archives
+    'zip': [
+      'application/zip',
+      'application/x-zip-compressed',
+      'application/x-zip',
+      'multipart/x-zip',
+      'application/octet-stream'
+    ],
+    'rar': ['application/x-rar-compressed', 'application/octet-stream'],
+    '7z': ['application/x-7z-compressed', 'application/octet-stream']
   };
 
   const allowedMimeTypes = mimeTypeMap[extension];
+
+  // If the browser did not provide a MIME type, accept based on extension only
+  if (!mimeType || mimeType.trim() === '') {
+    return Boolean(allowedMimeTypes);
+  }
+
   return allowedMimeTypes ? allowedMimeTypes.includes(mimeType) : false;
 }
 

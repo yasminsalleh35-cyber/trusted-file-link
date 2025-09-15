@@ -162,21 +162,29 @@ export function validateFileSize(size: number, maxSize = 100 * 1024 * 1024): voi
  * MIME type validation
  */
 export function validateMimeType(mimeType: string, allowedTypes?: string[]): void {
-  if (!mimeType) {
-    throw new ValidationError('mimeType', 'MIME type is required');
+  // Some browsers may not provide a MIME type for certain files (e.g., zip)
+  // Allow empty MIME type and rely on extension-based checks in security layer
+  if (mimeType == null) {
+    throw new ValidationError('mimeType', 'MIME type must not be null or undefined');
   }
-  
+
   if (typeof mimeType !== 'string') {
     throw new ValidationError('mimeType', 'MIME type must be a string');
   }
+
+  const trimmed = mimeType.trim();
+  if (trimmed === '') {
+    // Accept empty string; extension matching will be enforced in security.ts
+    return;
+  }
   
   // Basic MIME type format validation
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_.]*$/.test(mimeType)) {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-\^_.]*$/.test(trimmed)) {
     throw new ValidationError('mimeType', 'Invalid MIME type format');
   }
   
-  if (allowedTypes && !allowedTypes.includes(mimeType)) {
-    throw new ValidationError('mimeType', `MIME type '${mimeType}' is not allowed`);
+  if (allowedTypes && !allowedTypes.includes(trimmed)) {
+    throw new ValidationError('mimeType', `MIME type '${trimmed}' is not allowed`);
   }
 }
 

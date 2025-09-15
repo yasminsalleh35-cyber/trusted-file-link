@@ -51,28 +51,31 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   });
 
   // Handle file drop/selection
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+  const onDrop = useCallback(async (acceptedFiles: File[], rejectedFiles: any[]) => {
     if (disabled) return;
 
-    // Handle rejected files
+    // Handle rejected by dropzone
     if (rejectedFiles.length > 0) {
       const errors = rejectedFiles.map(({ file, errors }) => 
         `${file.name}: ${errors.map((e: any) => e.message).join(', ')}`
       );
       onUploadError?.(errors.join('\n'));
-      return;
+      // Continue to attempt our own validation for accepted files
     }
 
-    // Validate files
+    // Async validate files using hook validation (security + content scan)
     const validFiles: File[] = [];
     const invalidFiles: string[] = [];
 
-    acceptedFiles.forEach(file => {
-      const validation = validateFile(file);
-      if (validation.valid) {
+    const results = await Promise.all(
+      acceptedFiles.map(async (file) => ({ file, result: await validateFile(file) }))
+    );
+
+    results.forEach(({ file, result }) => {
+      if (result.valid) {
         validFiles.push(file);
       } else {
-        invalidFiles.push(`${file.name}: ${validation.error}`);
+        invalidFiles.push(`${file.name}: ${result.error || 'Invalid file'}`);
       }
     });
 

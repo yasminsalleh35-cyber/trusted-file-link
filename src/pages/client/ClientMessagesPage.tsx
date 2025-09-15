@@ -27,6 +27,8 @@ import { useMessages } from '@/hooks/useMessages';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import type { MessageFilters } from '@/hooks/useMessages';
 
 /**
@@ -51,6 +53,7 @@ const ClientMessagesPage: React.FC = () => {
     isLoading,
     error,
     sendMessage,
+    sendToAllClientUsers,
     markAsRead,
     deleteMessage,
     refreshMessages,
@@ -65,6 +68,10 @@ const ClientMessagesPage: React.FC = () => {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState<any>(null);
   const [composePreset, setComposePreset] = useState<'admin' | null>(null);
+  const [isBroadcastOpen, setIsBroadcastOpen] = useState(false);
+  const [broadcastSubject, setBroadcastSubject] = useState('');
+  const [broadcastContent, setBroadcastContent] = useState('');
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   // Client navigation items
   const navigationItems = [
@@ -176,13 +183,17 @@ const ClientMessagesPage: React.FC = () => {
   // Get selected message
   const selectedMessage = selectedMessageId ? getMessageById(selectedMessageId) : null;
 
-  // Auto-open compose if URL has compose=admin
+  // Auto-open compose if URL has compose=admin, or open broadcast modal if broadcast=1
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const compose = params.get('compose');
+    const broadcast = params.get('broadcast');
     if (compose === 'admin') {
       setComposePreset('admin');
       setIsComposeOpen(true);
+    }
+    if (broadcast === '1') {
+      setIsBroadcastOpen(true);
     }
   }, []);
 
@@ -213,6 +224,13 @@ const ClientMessagesPage: React.FC = () => {
             >
               <Send className="h-4 w-4 mr-2" />
               New Message
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => setIsBroadcastOpen(true)}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Message All Users
             </Button>
           </div>
         </div>
@@ -420,6 +438,54 @@ const ClientMessagesPage: React.FC = () => {
         } : undefined}
         presetRole={composePreset === 'admin' ? 'admin' : undefined}
       />
+
+      {/* Broadcast to all site users modal */}
+      <Dialog open={isBroadcastOpen} onOpenChange={() => setIsBroadcastOpen(false)}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="font-mining-header">Message All Site Users</DialogTitle>
+            <DialogDescription>Send an announcement to every user at your site.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input 
+              placeholder="Subject (optional)"
+              value={broadcastSubject}
+              onChange={(e) => setBroadcastSubject(e.target.value)}
+            />
+            <Textarea 
+              placeholder="Type your announcement..."
+              rows={6}
+              value={broadcastContent}
+              onChange={(e) => setBroadcastContent(e.target.value)}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsBroadcastOpen(false)} disabled={isBroadcasting}>Cancel</Button>
+              <Button 
+                onClick={async () => {
+                  try {
+                    setIsBroadcasting(true);
+                    const result = await sendToAllClientUsers({ subject: broadcastSubject || undefined, content: broadcastContent.trim() });
+                    if (result.success) {
+                      toast({ title: 'Announcement sent', description: `Delivered to ${result.sentCount} users.` });
+                      setIsBroadcastOpen(false);
+                      setBroadcastSubject('');
+                      setBroadcastContent('');
+                    } else {
+                      toast({ title: 'Failed to send', description: result.error || 'Unknown error', variant: 'destructive' });
+                    }
+                  } finally {
+                    setIsBroadcasting(false);
+                  }
+                }}
+                disabled={isBroadcasting || !broadcastContent.trim()}
+                className="bg-mining-primary hover:bg-mining-primary/90"
+              >
+                {isBroadcasting ? 'Sending…' : 'Send to All Users'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

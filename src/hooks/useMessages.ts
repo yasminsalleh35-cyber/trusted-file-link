@@ -266,6 +266,87 @@ export const useMessages = () => {
     }
   };
 
+  // Send a message to all site users under the client's account (bulk insert)
+  const sendToAllClientUsers = async (data: { subject?: string; content: string }): Promise<{ success: boolean; error?: string; sentCount?: number }> => {
+    if (!user) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      // Ensure session
+      let { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        sessionData = refreshed || null;
+      }
+      if (!sessionData?.session) {
+        return { success: false, error: 'No active session. Please sign in again.' };
+      }
+
+      // Auth user
+      const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+      if (userError || !authUser) {
+        return { success: false, error: 'Authentication failed: ' + (userError?.message || 'No authenticated user') };
+      }
+
+      // Sender profile (must be client)
+      const { data: senderProfile, error: senderError } = await supabase
+        .from('profiles')
+        .select('id, role, client_id')
+        .eq('id', authUser.id)
+        .single();
+      if (senderError || !senderProfile) {
+        return { success: false, error: 'Sender profile not found in database' };
+      }
+      if (String(senderProfile.role).toLowerCase() !== 'client') {
+        return { success: false, error: 'Only site managers can broadcast to all site users.' };
+      }
+      if (!senderProfile.client_id) {
+        return { success: false, error: 'Your profile is missing client_id. Cannot determine site users.' };
+      }
+
+      // Fetch all users under same client
+      const { data: recipients, error: recipientsError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'user')
+        .eq('client_id', senderProfile.client_id);
+      if (recipientsError) {
+        return { success: false, error: recipientsError.message };
+      }
+
+      const recipientIds = (recipients || []).map(r => r.id).filter(Boolean);
+      if (recipientIds.length === 0) {
+        return { success: false, error: 'No site users found to message.' };
+      }
+
+      // Build bulk messages
+      const inserts: MessageInsert[] = recipientIds.map((rid) => ({
+        sender_id: authUser.id,
+        recipient_id: rid,
+        subject: data.subject || null,
+        content: data.content,
+        message_type: 'client_to_user' as MessageType
+      }));
+
+      const { error: bulkError } = await supabase
+        .from('messages')
+        .insert(inserts);
+      if (bulkError) {
+        if ((bulkError as any).message?.includes('row-level security')) {
+          return { success: false, error: 'Permission denied by security policy. Check roles and site membership.' };
+        }
+        return { success: false, error: bulkError.message };
+      }
+
+      await fetchMessages();
+      return { success: true, sentCount: inserts.length };
+    } catch (error) {
+      console.error('Error broadcasting message:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to broadcast message' };
+    }
+  };
+
   // Mark message as read
   const markAsRead = async (messageId: string): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
@@ -440,6 +521,7 @@ export const useMessages = () => {
     
     // Actions
     sendMessage,
+    sendToAllClientUsers,
     markAsRead,
     markMultipleAsRead,
     deleteMessage,

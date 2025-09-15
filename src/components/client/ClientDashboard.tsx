@@ -29,6 +29,9 @@ import { useFileManagement } from '@/hooks/useFileManagement';
 import { AddTeamMemberModal } from '@/components/client/team/AddTeamMemberModal';
 import { TeamMemberCard } from '@/components/client/team/TeamMemberCard';
 import { FilePreviewModal } from '@/components/files/FilePreviewModal';
+import { ComposeMessageModal } from '@/components/messages/ComposeMessageModal';
+import { useMessages } from '@/hooks/useMessages';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * ClientDashboard Component
@@ -78,6 +81,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
+  
+  // Messaging state
+  const { sendMessage } = useMessages();
+  const { toast } = useToast();
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
   
   // Preview modal state
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -228,7 +236,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             <HardHat className="mr-2 h-4 w-4" />
             Add User
           </Button>
-          <Button variant="outline" onClick={() => onNavigate('/client/messages?compose=admin')}>
+          <Button variant="outline" onClick={() => setIsComposeOpen(true)}>
             <MessageSquare className="mr-2 h-4 w-4" />
             Contact Admin
           </Button>
@@ -237,6 +245,20 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </Button>
         </div>
       </div>
+
+      {/* Compose Message Modal for contacting admin */}
+      <ComposeMessageModal
+        isOpen={isComposeOpen}
+        onClose={() => setIsComposeOpen(false)}
+        onSend={async ({ recipientId, subject, content, messageType }) => {
+          const result = await sendMessage({ recipientId, subject, content, messageType });
+          if (!result.success) {
+            toast({ title: 'Error', description: result.error || 'Failed to send message', variant: 'destructive' });
+          }
+          return result;
+        }}
+        presetRole={'admin'}
+      />
 
       {/* Mining Operations Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -429,6 +451,14 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             >
               <MessageSquare className="h-6 w-6 mb-2 text-client" />
               <span className="text-sm">Messages</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-20 flex-col"
+              onClick={() => onNavigate('/client/messages?broadcast=1')}
+            >
+              <Users className="h-6 w-6 mb-2 text-client" />
+              <span className="text-sm">Message All Users</span>
             </Button>
             <Button
               variant="outline"

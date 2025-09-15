@@ -256,7 +256,17 @@ export function validateFile(file: File): void {
     // Code files
     'text/javascript', 'text/typescript', 'text/html', 'text/css', 'application/json',
     // Archives
-    'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed'
+    'application/zip', 'application/x-zip-compressed', 'application/x-zip', 'multipart/x-zip',
+    'application/x-rar-compressed', 'application/x-7z-compressed'
+  ];
+
+  const ALLOWED_EXTENSIONS = [
+    // Images
+    'jpg','jpeg','png','gif','webp',
+    // Documents
+    'pdf','txt','csv','doc','docx','xls','xlsx','ppt','pptx','json',
+    // Archives
+    'zip','rar','7z'
   ];
 
   if (!file) {
@@ -267,7 +277,13 @@ export function validateFile(file: File): void {
     throw new ValidationError('file', `File size exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`, file.size);
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  const fileType = (file.type || '').trim();
+  const fileExt = file.name.includes('.') ? file.name.split('.').pop()!.toLowerCase() : '';
+
+  const isAllowedByType = fileType !== '' && ALLOWED_TYPES.includes(fileType);
+  const isAllowedByExtFallback = (fileType === '' || fileType === 'application/octet-stream') && ALLOWED_EXTENSIONS.includes(fileExt);
+
+  if (!isAllowedByType && !isAllowedByExtFallback) {
     throw new ValidationError('file', `File type '${file.type}' is not supported`, file.type);
   }
 
