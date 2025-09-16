@@ -166,10 +166,11 @@ Use the login form with the built-in demo accounts and role selection:
 
 ### **STEP 1: Supabase Connection (REQUIRED FIRST)**
 
-⚠️ **ACTION REQUIRED**: Click the green **Supabase** button in Lovable interface to connect your existing Supabase project:
-- **Project ID**: `hodpwoqadtbgerfdcizq`
-- **Project URL**: `https://hodpwoqadtbgerfdcizq.supabase.co`
-- **Status**: ⏳ Pending Connection
+⚠️ **ACTION REQUIRED**: Set the following environment variables to connect your Supabase project (no platform dependency):
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+
+You can place them in a .env file for local development and configure them in your hosting provider.
 
 **This connection will enable:**
 - Real authentication with email/password
@@ -346,12 +347,11 @@ The application is built with responsive design principles:
 ## 💰 **Cost Breakdown**
 
 ### **Development**: FREE
-- Lovable platform (free tier)
 - Open source components
 - No licensing fees
 
 ### **Hosting**: FREE
-- Lovable hosting included
+- Netlify/Vercel/Render free tiers
 - Supabase free tier (up to 500MB)
 - No additional hosting costs
 
@@ -375,4 +375,4 @@ For questions about the client portal system:
 
 ---
 
-**Built with ❤️ using Lovable, React, TypeScript, and Tailwind CSS**
+**Built with ❤️ using React, TypeScript, and Tailwind CSS**
