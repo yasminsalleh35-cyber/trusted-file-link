@@ -178,6 +178,44 @@ export const useMessages = () => {
   // Update ref with latest fetchMessages
   fetchMessagesRef.current = fetchMessages;
 
+  // Realtime subscription to messages table for the current user
+  useEffect(() => {
+    if (!user) return;
+
+    // Initial fetch
+    fetchMessagesRef.current?.();
+
+    const channel = supabase
+      .channel('messages-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'messages',
+        filter: `sender_id=eq.${user.id}`
+      }, () => {
+        fetchMessagesRef.current?.();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'messages',
+        filter: `recipient_id=eq.${user.id}`
+      }, () => {
+        fetchMessagesRef.current?.();
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          // Optionally log
+        }
+      });
+
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {}
+    };
+  }, [user]);
+
   // Send a new message
   const sendMessage = async (messageData: SendMessageData): Promise<{ success: boolean; error?: string; messageId?: string }> => {
     if (!user) {

@@ -35,9 +35,10 @@ export const FileCard: React.FC<FileCardProps> = ({
   onDownload,
   isLoading = false
 }) => {
-  // Get file icon based on extension
-  const getFileIcon = (fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase();
+  // Get file icon based on extension (defensive)
+  const getFileIcon = (fileName?: string) => {
+    const safeName = typeof fileName === 'string' ? fileName : '';
+    const extension = safeName.includes('.') ? safeName.split('.').pop()?.toLowerCase() : undefined;
     // For now, use generic file icon - can be enhanced with specific icons
     return <FileText className="h-8 w-8 text-user" />;
   };

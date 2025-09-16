@@ -140,12 +140,12 @@ export const useUserData = () => {
         }
       }
 
-      // Transform managed files to user files format
+      // Transform managed files to user files format (defensive defaults)
       const userFiles: AssignedFile[] = managedFiles.map(file => ({
         id: file.id,
-        name: file.original_name,
-        size: formatFileSize(file.file_size),
-        assignedAt: formatRelativeTime(file.created_at),
+        name: (file.original_filename || file.filename || 'Unknown File'),
+        size: formatFileSize(Number(file.file_size || 0)),
+        assignedAt: file.created_at ? formatRelativeTime(file.created_at) : 'Unknown',
         status: 'new' as const, // TODO: Implement real status tracking
         assignedBy: file.uploaded_by_name || 'Unknown',
         assignedByRole: file.uploaded_by_role || 'unknown'

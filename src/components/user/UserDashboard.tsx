@@ -70,11 +70,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       await markFileAsViewed(fileId);
       
       // Find the managed file to get the full data
-      const managedFile = userData.managedFiles?.find(f => f.id === fileId);
-      if (managedFile && userData.previewFile) {
+      const managedFile = userData?.managedFiles?.find(f => f.id === fileId);
+      if (managedFile && userData?.previewFile) {
         const previewUrl = await userData.previewFile(managedFile);
-        // Open preview in new tab
-        window.open(previewUrl, '_blank');
+        if (previewUrl) window.open(previewUrl, '_blank');
       }
     } catch (error) {
       console.error('Error viewing file:', error);
@@ -170,7 +169,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 Welcome, {profile?.full_name || 'Miner'}
               </h1>
               <p className="text-gray-200 font-mining-body">
-                {client?.company_name || 'Mining Site'} • Worker ID: {profile?.email?.split('@')[0]?.toUpperCase()}
+                {client?.company_name || 'Mining Site'} • Worker ID: {(profile?.email ? profile.email.split('@')[0] : 'USER')?.toUpperCase()}
               </p>
               <p className="text-sm text-gray-300 mt-1 font-mining-body">
                 Access safety documents and stay updated with site communications
@@ -214,7 +213,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-mining-mono text-green-600">ACTIVE</div>
-            <p className="text-xs text-muted-foreground">Last check-in: {stats.lastActivityTime.split(' ')[0]} ago</p>
+            <p className="text-xs text-muted-foreground">Last check-in: {(stats.lastActivityTime || '0 hours').split(' ')[0]} ago</p>
           </CardContent>
         </Card>
       </div>
