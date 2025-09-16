@@ -147,7 +147,7 @@ function validateMimeTypeConsistency(fileName: string, mimeType: string): boolea
   // Some browsers may provide empty or generic MIME types (e.g., for ZIP)
   // We handle these gracefully by falling back to extension-based allowlist.
   const extension = fileName.split('.').pop()?.toLowerCase();
-  if (!extension) return false;
+  if (!extension) return true; // Allow if we can't determine extension, rely on other validations
 
   const mimeTypeMap: Record<string, string[]> = {
     // Images

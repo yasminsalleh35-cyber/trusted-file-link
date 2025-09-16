@@ -122,12 +122,12 @@ export const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({
                 {/* Accessible File Upload */}
                 <AccessibleFileUpload
                   onFileSelect={(files) => setSelectedFiles(Array.from(files))}
-                  accept="*/*"
+                  accept="image/*,text/plain,text/csv,application/csv,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,application/x-zip-compressed,application/x-zip,multipart/x-zip,application/x-rar-compressed,application/x-7z-compressed,application/octet-stream"
                   multiple={true}
                   maxSize={100 * 1024 * 1024}
                   disabled={isUploading}
-                  ariaLabel="Upload files by dragging and dropping or clicking to select"
-                  helpText="Maximum file size: 100MB. Multiple files supported."
+                  ariaLabel="Upload files by dragging and dropping or clicking to select. Accepted: images, txt, csv, pdf, doc/docx, xls/xlsx, ppt/pptx, zip/rar/7z."
+                  helpText="Max 100MB. Supported: images, txt, csv, pdf, doc/docx, xls/xlsx, ppt/pptx, zip/rar/7z."
                 />
 
             {/* Selected Files */}

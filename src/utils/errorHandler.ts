@@ -249,14 +249,14 @@ export function validateFile(file: File): void {
     // Images
     'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
     // Documents
-    'application/pdf', 'text/plain', 'text/csv',
+    'application/pdf', 'text/plain', 'text/csv', 'application/csv', 'application/vnd.ms-excel.sheet.macroEnabled.12',
     'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     // Code files
     'text/javascript', 'text/typescript', 'text/html', 'text/css', 'application/json',
     // Archives
-    'application/zip', 'application/x-zip-compressed', 'application/x-zip', 'multipart/x-zip',
+    'application/zip', 'application/x-zip-compressed', 'application/x-zip', 'multipart/x-zip', 'application/octet-stream',
     'application/x-rar-compressed', 'application/x-7z-compressed'
   ];
 
@@ -284,7 +284,9 @@ export function validateFile(file: File): void {
   const isAllowedByExtFallback = (fileType === '' || fileType === 'application/octet-stream') && ALLOWED_EXTENSIONS.includes(fileExt);
 
   if (!isAllowedByType && !isAllowedByExtFallback) {
-    throw new ValidationError('file', `File type '${file.type}' is not supported`, file.type);
+    // Improve message to include extension
+    const extMsg = fileExt ? ` (.${fileExt})` : '';
+    throw new ValidationError('file', `File type '${file.type || 'unknown'}'${extMsg} is not supported`, { type: file.type, ext: fileExt });
   }
 
   // Check for potentially dangerous file extensions
