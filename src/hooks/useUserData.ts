@@ -103,11 +103,11 @@ export const useUserData = () => {
 
   // Fetch user data
   const fetchUserData = async () => {
-    if (!user || user.role !== 'user') {
+    if (!user) {
       setUserData(prev => ({
         ...prev,
         isLoading: false,
-        error: 'Invalid user or insufficient permissions'
+        error: 'No user session'
       }));
       return;
     }
@@ -292,6 +292,51 @@ export const useUserData = () => {
       fetchUserData();
     }
   }, [user]);
+
+  // Sync recent files when managed files change (fix stale data on first load)
+  useEffect(() => {
+    if (!user || user.role !== 'user') return;
+
+    const userFiles: AssignedFile[] = (managedFiles || []).map(file => ({
+      id: file.id,
+      name: (file.original_filename || file.filename || 'Unknown File'),
+      size: formatFileSize(Number(file.file_size || 0)),
+      assignedAt: file.created_at ? formatRelativeTime(file.created_at) : 'Unknown',
+      status: 'new' as const,
+      assignedBy: file.uploaded_by_name || 'Unknown',
+      assignedByRole: file.uploaded_by_role || 'unknown'
+    }));
+
+    setUserData(prev => ({
+      ...prev,
+      recentFiles: userFiles,
+      stats: { ...prev.stats, assignedFilesCount: userFiles.length },
+      managedFiles,
+      downloadFile: downloadManagedFile,
+      previewFile: previewManagedFile
+    }));
+  }, [managedFiles, downloadManagedFile, previewManagedFile, user]);
+
+  // Sync recent messages and unread count when messages change
+  useEffect(() => {
+    if (!user || user.role !== 'user') return;
+
+    const recentMsgs: UserMessage[] = (messages || []).slice(0, 5).map(msg => ({
+      id: msg.id,
+      from: msg.sender_name,
+      fromRole: msg.sender_role,
+      subject: msg.subject || 'No subject',
+      content: msg.content,
+      time: msg.formatted_time,
+      unread: msg.is_unread
+    }));
+
+    setUserData(prev => ({
+      ...prev,
+      recentMessages: recentMsgs,
+      stats: { ...prev.stats, unreadMessagesCount: messageStats.unreadMessages }
+    }));
+  }, [messages, messageStats.unreadMessages, user]);
 
   return {
     ...userData,
