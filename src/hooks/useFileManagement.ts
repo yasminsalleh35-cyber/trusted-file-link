@@ -229,6 +229,31 @@ export const useFileManagement = () => {
 
       setFiles(transformedFiles);
 
+      // Compute per-file download counts (from file_access_logs)
+      try {
+        const ids = transformedFiles.map(f => f.id);
+        if (ids.length > 0) {
+          const { data: logs, error: logsError } = await supabase
+            .from('file_access_logs')
+            .select('file_id, access_type')
+            .in('file_id', ids);
+          if (!logsError && logs) {
+            const downloadCountMap = new Map<string, number>();
+            for (const l of logs) {
+              if (l.access_type === 'download') {
+                downloadCountMap.set(l.file_id, (downloadCountMap.get(l.file_id) || 0) + 1);
+              }
+            }
+            setFiles(prev => prev.map(f => ({
+              ...f,
+              access_count: downloadCountMap.get(f.id) || 0
+            })));
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to compute download counts, continuing:', e);
+      }
+
       // Calculate stats
       const totalFiles = transformedFiles.length;
       const totalSize = transformedFiles.reduce((sum, file) => sum + (file.file_size || 0), 0);
@@ -262,9 +287,10 @@ export const useFileManagement = () => {
     if (!user) return;
 
     try {
+      // Join files so UI can show file name and manage assignments
       let query = supabase
         .from('file_assignments')
-        .select('*')
+        .select(`*, files(*)`)
         .order('created_at', { ascending: false });
 
       // Apply role-based filtering
@@ -283,16 +309,21 @@ export const useFileManagement = () => {
       }
 
       const { data: assignmentsData, error: assignmentsError } = await query;
-
       if (assignmentsError) throw assignmentsError;
 
-      const transformedAssignments: FileAssignment[] = assignmentsData?.map(assignment => ({
+      // Transform and normalize dates so UI doesn't show "Invalid Date"
+      const transformedAssignments: FileAssignment[] = (assignmentsData || []).map((assignment: any) => ({
         ...assignment,
-        assigned_to_name: 'User', // We'll fetch this separately if needed
+        // Normalize field expected by UI
+        assigned_at: assignment.created_at || new Date().toISOString(),
+        // Human labels (optional enhancements)
+        assigned_to_name: assignment.assigned_to_user ? 'User' : (assignment.assigned_to_client ? 'Client' : 'Unknown'),
         assigned_to_email: null,
-        assigned_to_client_name: 'Client',
-        assigned_by_name: 'Admin'
-      })) || [];
+        assigned_to_client_name: assignment.assigned_to_client ? 'Client' : undefined,
+        assigned_by_name: 'Admin',
+        // Attach the joined file as ManagedFile-compatible minimal object
+        file: assignment.files ? safeFileAccess(assignment.files) as ManagedFile : undefined
+      }));
 
       setAssignments(transformedAssignments);
 
@@ -301,6 +332,18 @@ export const useFileManagement = () => {
         ...prev,
         activeAssignments: transformedAssignments.length
       }));
+
+      // Update per-file assignment counts on the current file list
+      const assignmentCountMap = new Map<string, number>();
+      for (const a of transformedAssignments) {
+        const fid = a.file_id;
+        if (!fid) continue;
+        assignmentCountMap.set(fid, (assignmentCountMap.get(fid) || 0) + 1);
+      }
+      setFiles(prev => prev.map(f => ({
+        ...f,
+        assignment_count: assignmentCountMap.get(f.id) || 0
+      })));
 
     } catch (error) {
       console.error('Error fetching assignments:', error);
@@ -510,6 +553,9 @@ export const useFileManagement = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        // Refresh assignments to reflect latest status in dashboards that derive from assignments
+        try { await fetchAssignments(); } catch {}
       },
       'downloadFile',
       { 

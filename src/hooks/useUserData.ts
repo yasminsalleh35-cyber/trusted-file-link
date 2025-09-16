@@ -207,18 +207,23 @@ export const useUserData = () => {
     }
   };
 
-  // Mark file as viewed
+  // Mark file as viewed (persist via access log) and update local state
   const markFileAsViewed = async (fileId: string) => {
     try {
-      // TODO: Implement when files table is available
-      console.log('Marking file as viewed:', fileId);
-      
-      // Update local state for now
+      // Persist access in DB for auditing
+      await supabase.from('file_access_logs').insert({
+        file_id: fileId,
+        user_id: user?.id,
+        access_type: 'view',
+        accessed_at: new Date().toISOString()
+      });
+
+      // Update local state
       setUserData(prev => ({
         ...prev,
         recentFiles: prev.recentFiles.map(file =>
-          file.id === fileId && file.status === 'new' 
-            ? { ...file, status: 'viewed' as const } 
+          file.id === fileId && file.status === 'new'
+            ? { ...file, status: 'viewed' as const }
             : file
         )
       }));
@@ -230,18 +235,23 @@ export const useUserData = () => {
     }
   };
 
-  // Mark file as downloaded
+  // Mark file as downloaded (persist via access log) and update local state
   const markFileAsDownloaded = async (fileId: string) => {
     try {
-      // TODO: Implement when files table is available
-      console.log('Marking file as downloaded:', fileId);
-      
-      // Update local state for now
+      // Persist access in DB for auditing
+      await supabase.from('file_access_logs').insert({
+        file_id: fileId,
+        user_id: user?.id,
+        access_type: 'download',
+        accessed_at: new Date().toISOString()
+      });
+
+      // Update local state
       setUserData(prev => ({
         ...prev,
         recentFiles: prev.recentFiles.map(file =>
-          file.id === fileId 
-            ? { ...file, status: 'downloaded' as const } 
+          file.id === fileId
+            ? { ...file, status: 'downloaded' as const }
             : file
         )
       }));
@@ -293,28 +303,60 @@ export const useUserData = () => {
     }
   }, [user]);
 
-  // Sync recent files when managed files change (fix stale data on first load)
+  // Sync recent files when managed files change (fix stale data on first load) + hydrate status from access logs
   useEffect(() => {
     if (!user || user.role !== 'user') return;
 
-    const userFiles: AssignedFile[] = (managedFiles || []).map(file => ({
-      id: file.id,
-      name: (file.original_filename || file.filename || 'Unknown File'),
-      size: formatFileSize(Number(file.file_size || 0)),
-      assignedAt: file.created_at ? formatRelativeTime(file.created_at) : 'Unknown',
-      status: 'new' as const,
-      assignedBy: file.uploaded_by_name || 'Unknown',
-      assignedByRole: file.uploaded_by_role || 'unknown'
-    }));
+    const hydrate = async () => {
+      const baseFiles: AssignedFile[] = (managedFiles || []).map(file => ({
+        id: file.id,
+        name: (file.original_filename || file.filename || 'Unknown File'),
+        size: formatFileSize(Number(file.file_size || 0)),
+        assignedAt: file.created_at ? formatRelativeTime(file.created_at) : 'Unknown',
+        status: 'new' as const,
+        assignedBy: file.uploaded_by_name || 'Unknown',
+        assignedByRole: file.uploaded_by_role || 'unknown'
+      }));
 
-    setUserData(prev => ({
-      ...prev,
-      recentFiles: userFiles,
-      stats: { ...prev.stats, assignedFilesCount: userFiles.length },
-      managedFiles,
-      downloadFile: downloadManagedFile,
-      previewFile: previewManagedFile
-    }));
+      // Fetch last access per file for current user to set status
+      let statusMap = new Map<string, 'viewed' | 'downloaded'>();
+      if (baseFiles.length > 0) {
+        const fileIds = baseFiles.map(f => f.id);
+        // Query access logs for these files
+        const { data: logs } = await supabase
+          .from('file_access_logs')
+          .select('file_id, access_type, accessed_at')
+          .in('file_id', fileIds)
+          .eq('user_id', user.id)
+          .order('accessed_at', { ascending: false });
+
+        if (logs && logs.length) {
+          for (const log of logs) {
+            const type = (log.access_type as 'view' | 'download' | 'preview');
+            if (!statusMap.has(log.file_id)) {
+              if (type === 'download') statusMap.set(log.file_id, 'downloaded');
+              else if (type === 'view' || type === 'preview') statusMap.set(log.file_id, 'viewed');
+            }
+          }
+        }
+      }
+
+      const userFiles = baseFiles.map(f => ({
+        ...f,
+        status: statusMap.get(f.id) || f.status
+      }));
+
+      setUserData(prev => ({
+        ...prev,
+        recentFiles: userFiles,
+        stats: { ...prev.stats, assignedFilesCount: userFiles.length },
+        managedFiles,
+        downloadFile: downloadManagedFile,
+        previewFile: previewManagedFile
+      }));
+    };
+
+    hydrate();
   }, [managedFiles, downloadManagedFile, previewManagedFile, user]);
 
   // Sync recent messages and unread count when messages change

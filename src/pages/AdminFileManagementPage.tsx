@@ -788,7 +788,7 @@ const AdminFileManagementPage: React.FC = () => {
                             Assigned to: {assignment.assigned_to_name || assignment.assigned_to_client_name}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            By: {assignment.assigned_by_name} • {new Date(assignment.assigned_at).toLocaleDateString()}
+                            By: {assignment.assigned_by_name} • {assignment.assigned_at ? new Date(assignment.assigned_at).toLocaleDateString() : 'Unknown date'}
                           </p>
                         </div>
                         <Button
