@@ -61,7 +61,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     refreshData,
     markMessageAsRead,
     markFileAsViewed,
-    markFileAsDownloaded
+    markFileAsDownloaded,
+    managedFiles,
+    previewFile,
+    downloadFile
   } = useUserData();
 
   // Handle file view
@@ -70,9 +73,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       await markFileAsViewed(fileId);
       
       // Find the managed file to get the full data
-      const managedFile = userData?.managedFiles?.find(f => f.id === fileId);
-      if (managedFile && userData?.previewFile) {
-        const previewUrl = await userData.previewFile(managedFile);
+      const managedFile = managedFiles?.find(f => f.id === fileId);
+      if (managedFile && previewFile) {
+        const previewUrl = await previewFile(managedFile);
         if (previewUrl) window.open(previewUrl, '_blank');
       }
     } catch (error) {
@@ -86,9 +89,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       await markFileAsDownloaded(fileId);
       
       // Find the managed file to get the full data
-      const managedFile = userData.managedFiles?.find(f => f.id === fileId);
-      if (managedFile && userData.downloadFile) {
-        await userData.downloadFile(managedFile);
+      const managedFile = managedFiles?.find(f => f.id === fileId);
+      if (managedFile && downloadFile) {
+        await downloadFile(managedFile);
       }
     } catch (error) {
       console.error('Error downloading file:', error);
