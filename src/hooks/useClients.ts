@@ -167,14 +167,14 @@ export const useClients = () => {
     }
   };
 
-  // Delete a client via admin API (cascades: removes auth users + profiles, then client)
+  // Delete a client via Edge Function (cascades: removes auth users + profiles, then client)
   const deleteClient = async (clientId: string) => {
     try {
       setError(null);
 
       const { deleteClientCascade } = await import('@/lib/adminApi');
       const resp = await deleteClientCascade(clientId, true);
-      if (!resp.ok) throw new Error(resp.error || 'Admin cascade delete failed');
+      if (!resp.ok) throw new Error(resp.error || 'Cascade delete failed');
 
       setClients(prev => prev.filter(client => client.id !== clientId));
       return { success: true };

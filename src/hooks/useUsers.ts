@@ -108,15 +108,10 @@ export const useUsers = () => {
     try {
       setError(null);
 
-      // 1) Call admin API to delete Supabase Auth user and cleanup profile
+      // Call Supabase Edge Function to delete auth user + profile
       const { deleteAuthUser } = await import('@/lib/adminApi');
       const adminResp = await deleteAuthUser(id);
-      if (!adminResp.ok) {
-        throw new Error(adminResp.error || 'Admin delete failed');
-      }
-
-      // 2) As a safety net, try to remove profile row (admin API already attempts this)
-      await supabase.from('profiles').delete().eq('id', id);
+      if (!adminResp.ok) throw new Error(adminResp.error || 'Delete failed');
 
       setUsers(prev => prev.filter(u => u.id !== id));
       return { success: true, warning: adminResp.warning } as any;

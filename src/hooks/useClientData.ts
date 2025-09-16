@@ -198,21 +198,29 @@ export const useClientData = () => {
     }
   };
 
-  // Remove team member
+  // Remove team member (also delete from Supabase Auth via Edge Function)
   const removeTeamMember = async (memberId: string) => {
     try {
-      // Note: In a real app, you might want to deactivate rather than delete
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', memberId)
-        .eq('client_id', user?.client_id); // Ensure client can only remove their own users
+      // Call Edge Function delete-user; client role allowed only within same client_id
+      const functionsUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`;
+      const session = (await supabase.auth.getSession()).data.session;
+      if (!session) throw new Error('Not authenticated');
 
-      if (error) throw error;
+      const res = await fetch(functionsUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId: memberId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || `Delete failed: ${res.status}`);
+      }
 
       // Refresh data
       await refreshData();
-      
       return { success: true };
     } catch (error) {
       console.error('Error removing team member:', error);
