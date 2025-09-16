@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none">
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="120" fill="#0f172a"/>
+  <circle cx="128" cy="128" r="118" fill="url(#g)" opacity="0.08"/>
+
+  <!-- Pickaxe handle -->
+  <rect x="120" y="60" width="16" height="120" rx="8" fill="#eab308"/>
+  <rect x="120" y="60" width="16" height="120" rx="8" fill="#000" opacity="0.15"/>
+
+  <!-- Pickaxe head -->
+  <path d="M56 104c32-28 72-28 104 0l8 8-20 20-8-8c-24-22-60-22-84 0l-8 8-20-20 8-8z" fill="#94a3b8"/>
+  <path d="M200 104c-20-18-44-25-68-22 20 5 38 14 52 26l8 8-20 20-8-8c-8-7-16-12-26-16 22-1 44 7 62 22l8 6 18-18-8-6z" fill="#cbd5e1" opacity="0.8"/>
+
+  <!-- Shovel handle (cross) -->
+  <rect x="84" y="120" width="16" height="80" rx="8" transform="rotate(-45 84 120)" fill="#22c55e"/>
+  <rect x="84" y="120" width="16" height="80" rx="8" transform="rotate(-45 84 120)" fill="#000" opacity="0.15"/>
+
+  <!-- Shovel blade -->
+  <path d="M172 164c10 10 10 26 0 36s-26 10-36 0l-10-10 36-36 10 10z" fill="#38bdf8"/>
+  <path d="M172 164c10 10 10 26 0 36s-26 10-36 0l-10-10 8-8 10 10c6 6 16 6 22 0s6-16 0-22l-10-10 8-8 10 10z" fill="#000" opacity="0.15"/>
+
+  <!-- Sparkle -->
+  <g fill="#fde68a">
+    <circle cx="56" cy="72" r="3"/>
+    <circle cx="200" cy="68" r="2"/>
+    <circle cx="212" cy="140" r="2.5"/>
+  </g>
+
+  <!-- Gradient for subtle ring -->
+  <defs>
+    <radialGradient id="g" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(128 128) rotate(90) scale(128)">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>
