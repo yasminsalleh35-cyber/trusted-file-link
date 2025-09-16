@@ -6,8 +6,3 @@
   NODE_VERSION = "20"
   ROLLUP_SKIP_NODE_NATIVE = "true"
   NPM_FLAGS = "--no-audit --no-fund --prefer-offline"
-
-[build.environment]
-  NODE_VERSION = "20"
-  ROLLUP_SKIP_NODE_NATIVE = "true"
-  NPM_FLAGS = "--no-audit --no-fund --prefer-offline"
