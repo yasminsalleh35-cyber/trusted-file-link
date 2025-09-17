@@ -264,12 +264,13 @@ export const useFileManagement = () => {
         return uploadDate > weekAgo;
       }).length;
 
-        setStats({
+        // Preserve activeAssignments to avoid race with fetchAssignments()
+        setStats(prev => ({
           totalFiles,
           totalSize,
           recentUploads,
-          activeAssignments: 0 // Will be calculated when assignments are fetched
-        });
+          activeAssignments: prev.activeAssignments
+        }));
       },
       'fetchFiles',
       { 
